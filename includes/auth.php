@@ -1,145 +1,140 @@
 <?php
 /**
- * Gerenciamento de Autenticação e Sessão de Usuário
+ * Gerenciamento de Autenticação e Sessões Nativas
+ * Barbearia Corte na Navalha
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config/db.php';
 
-/**
- * Verifica se há um usuário autenticado na sessão atual
- */
-function isLoggedIn(): bool {
-    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
-}
-
-/**
- * Obtém os dados do usuário atualmente logado
- */
-function getCurrentUser(PDO $pdo): ?array {
-    if (!isLoggedIn()) {
-        return null;
-    }
-
-    $stmt = $pdo->prepare("SELECT id, nome, email, raio_padrao, tipo_alarme_padrao, som_alarme, criado_em FROM usuarios WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $user = $stmt->fetch();
-
-    return $user ?: null;
-}
-
-/**
- * Autentica o usuário pelo e-mail e senha
- */
-function loginUser(PDO $pdo, string $email, string $senha): array {
-    $stmt = $pdo->prepare("SELECT id, nome, email, senha, raio_padrao, tipo_alarme_padrao, som_alarme FROM usuarios WHERE email = ?");
-    $stmt->execute([trim($email)]);
-    $user = $stmt->fetch();
-
-    if (!$user) {
-        return ['success' => false, 'message' => 'E-mail ou senha inválidos.'];
-    }
-
-    if (!password_verify($senha, $user['senha'])) {
-        return ['success' => false, 'message' => 'E-mail ou senha inválidos.'];
-    }
-
-    // Registra na sessão nativa
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_nome'] = $user['nome'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['raio_padrao'] = $user['raio_padrao'];
-    $_SESSION['tipo_alarme_padrao'] = $user['tipo_alarme_padrao'];
-    $_SESSION['som_alarme'] = $user['som_alarme'];
-
-    return [
-        'success' => true,
-        'message' => 'Login realizado com sucesso!',
-        'user' => [
-            'id' => $user['id'],
-            'nome' => $user['nome'],
-            'email' => $user['email'],
-            'raio_padrao' => $user['raio_padrao'],
-            'tipo_alarme_padrao' => $user['tipo_alarme_padrao'],
-            'som_alarme' => $user['som_alarme']
-        ]
-    ];
-}
-
-/**
- * Registra um novo usuário no banco com password_hash seguro
- */
-function registerUser(PDO $pdo, string $nome, string $email, string $senha, int $raioPadrao = 300, string $tipoAlarme = 'ambos', string $somAlarme = 'sirene'): array {
-    $nome = trim($nome);
-    $email = strtolower(trim($email));
-
-    if (empty($nome) || empty($email) || empty($senha)) {
-        return ['success' => false, 'message' => 'Por favor, preencha todos os campos obrigatórios.'];
-    }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return ['success' => false, 'message' => 'Formato de e-mail inválido.'];
-    }
-
-    if (strlen($senha) < 6) {
-        return ['success' => false, 'message' => 'A senha deve ter no mínimo 6 caracteres.'];
-    }
-
-    // Verifica se e-mail já existe
-    $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        return ['success' => false, 'message' => 'Este e-mail já está cadastrado. Tente fazer login.'];
-    }
-
-    // Hash seguro da senha
-    $hashSenha = password_hash($senha, PASSWORD_DEFAULT);
-
-    $insert = $pdo->prepare("
-        INSERT INTO usuarios (nome, email, senha, raio_padrao, tipo_alarme_padrao, som_alarme)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ");
-    $insert->execute([$nome, $email, $hashSenha, $raioPadrao, $tipoAlarme, $somAlarme]);
-
-    $novoId = (int)$pdo->lastInsertId();
-
-    // Inicia sessão automaticamente após cadastro
-    $_SESSION['user_id'] = $novoId;
-    $_SESSION['user_nome'] = $nome;
-    $_SESSION['user_email'] = $email;
-    $_SESSION['raio_padrao'] = $raioPadrao;
-    $_SESSION['tipo_alarme_padrao'] = $tipoAlarme;
-    $_SESSION['som_alarme'] = $somAlarme;
-
-    return [
-        'success' => true,
-        'message' => 'Cadastro realizado com sucesso!',
-        'user' => [
-            'id' => $novoId,
-            'nome' => $nome,
-            'email' => $email,
-            'raio_padrao' => $raioPadrao,
-            'tipo_alarme_padrao' => $tipoAlarme,
-            'som_alarme' => $somAlarme
-        ]
-    ];
-}
-
-/**
- * Encerra a sessão do usuário
- */
-function logoutUser(): void {
+function iniciarSessao() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $_SESSION = [];
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
+}
+
+iniciarSessao();
+
+/**
+ * Retorna se há um usuário autenticado
+ */
+function usuarioLogado() {
+    return isset($_SESSION['usuario_id']) && !empty($_SESSION['usuario_id']);
+}
+
+/**
+ * Retorna os dados do usuário autenticado na sessão
+ */
+function getUsuarioLogado() {
+    if (!usuarioLogado()) {
+        return null;
     }
-    session_destroy();
+    return [
+        'id'        => $_SESSION['usuario_id'],
+        'nome'      => $_SESSION['usuario_nome'] ?? 'Usuário',
+        'email'     => $_SESSION['usuario_email'] ?? '',
+        'perfil'    => $_SESSION['usuario_perfil'] ?? 'cliente',
+        'cpf'       => $_SESSION['usuario_cpf'] ?? '',
+        'telefone'  => $_SESSION['usuario_telefone'] ?? ''
+    ];
+}
+
+/**
+ * Protege rotas exigindo autenticação e perfis permitidos
+ * @param array|string $perfisPermitidos
+ */
+function exigirLogin($perfisPermitidos = []) {
+    if (!usuarioLogado()) {
+        setMensagemToast('warning', 'Acesso Restrito', 'Faça login para acessar esta página.');
+        header('Location: ' . BASE_URL . '/login.php');
+        exit;
+    }
+
+    if (!empty($perfisPermitidos)) {
+        if (is_string($perfisPermitidos)) {
+            $perfisPermitidos = [$perfisPermitidos];
+        }
+        $perfilAtual = $_SESSION['usuario_perfil'] ?? '';
+        if (!in_array($perfilAtual, $perfisPermitidos)) {
+            setMensagemToast('danger', 'Acesso Negado', 'Você não tem permissão para acessar esta área.');
+            redirecionarPorPerfil($perfilAtual);
+            exit;
+        }
+    }
+}
+
+/**
+ * Redireciona o usuário para o dashboard apropriado de acordo com seu perfil
+ */
+function redirecionarPorPerfil($perfil) {
+    switch ($perfil) {
+        case 'dono':
+            header('Location: ' . BASE_URL . '/admin/dashboard.php');
+            break;
+        case 'barbeiro':
+            header('Location: ' . BASE_URL . '/barbeiro/dashboard.php');
+            break;
+        case 'recepcao':
+            header('Location: ' . BASE_URL . '/recepcao/dashboard.php');
+            break;
+        case 'cliente':
+        default:
+            header('Location: ' . BASE_URL . '/cliente/dashboard.php');
+            break;
+    }
+    exit;
+}
+
+/**
+ * Define mensagens estilo Toast para exibição na próxima tela
+ */
+function setMensagemToast($tipo, $titulo, $mensagem) {
+    iniciarSessao();
+    $_SESSION['toast_mensagem'] = [
+        'tipo'     => $tipo, // success, danger, warning, info
+        'titulo'   => $titulo,
+        'mensagem' => $mensagem
+    ];
+}
+
+/**
+ * Recupera e consome a mensagem Toast pendente
+ */
+function getMensagensToast() {
+    iniciarSessao();
+    if (isset($_SESSION['toast_mensagem'])) {
+        $msg = $_SESSION['toast_mensagem'];
+        unset($_SESSION['toast_mensagem']);
+        return $msg;
+    }
+    return null;
+}
+
+/**
+ * Validação de CPF brasileiro
+ */
+function validarCPF($cpf) {
+    $cpf = preg_replace('/[^0-9]/', '', (string)$cpf);
+    if (strlen($cpf) != 11) return false;
+    if (preg_match('/(\d)\1{10}/', $cpf)) return false;
+
+    for ($t = 9; $t < 11; $t++) {
+        for ($d = 0, $c = 0; $c < $t; $c++) {
+            $d += $cpf[$c] * (($t + 1) - $c);
+        }
+        $d = ((10 * $d) % 11) % 10;
+        if ($cpf[$c] != $d) return false;
+    }
+    return true;
+}
+
+/**
+ * Validação de Gmail/Email
+ */
+function validarEmail($email, $exigirGmail = false) {
+    $email = filter_var(trim($email), FILTER_VALIDATE_EMAIL);
+    if (!$email) return false;
+    if ($exigirGmail) {
+        return (bool)preg_match('/@(gmail\.com|googlemail\.com)$/i', $email);
+    }
+    return true;
 }
