@@ -1,0 +1,270 @@
+/**
+ * Alarme a Distância - Estilos Customizados (Mobile First)
+ */
+
+:root {
+    --primary-color: #0d6efd;
+    --primary-hover: #0b5ed7;
+    --accent-color: #ff3b30;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --bg-dark: #121826;
+    --card-bg: #ffffff;
+    --border-radius-custom: 16px;
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f6f9;
+    color: #212529;
+    min-height: 100vh;
+    padding-bottom: 70px;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, #0d6efd, #00d2ff);
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+}
+
+/* Cards e Containers */
+.card-app {
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: var(--border-radius-custom);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.card-app .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+}
+
+/* Mapa Leaflet */
+#map {
+    width: 100%;
+    height: 340px;
+    border-radius: 14px;
+    z-index: 1;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+@media (min-width: 768px) {
+    #map {
+        height: 460px;
+    }
+}
+
+/* Indicador de Status do Monitoramento */
+.status-badge-tracker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.status-badge-tracker.inativo {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.status-badge-tracker.ativo {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-badge-tracker.pausado {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.status-badge-tracker.alarme {
+    background-color: #f8d7da;
+    color: #842029;
+    animation: pulse-danger 1s infinite alternate;
+}
+
+/* Ponto pulsante de GPS */
+.gps-pulse-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #198754;
+    border-radius: 50%;
+    position: relative;
+    display: inline-block;
+}
+
+.gps-pulse-dot::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 2px solid #198754;
+    border-radius: 50%;
+    animation: radar-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radar-ping {
+    0% { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(2.8); opacity: 0; }
+}
+
+@keyframes pulse-danger {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(220, 53, 69, 0.4); }
+    100% { transform: scale(1.04); box-shadow: 0 0 15px rgba(220, 53, 69, 0.7); }
+}
+
+/* Painel de Distância em Tempo Real */
+.distance-display-box {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    border-radius: var(--border-radius-custom);
+    padding: 1.25rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+}
+
+.distance-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #38bdf8;
+    line-height: 1.1;
+}
+
+.distance-unit {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-left: 4px;
+}
+
+/* Tela de Alarme Ativo (Overlay Urgente) */
+.alarm-overlay-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(220, 53, 69, 0.96);
+    color: white;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    animation: flash-alarm-bg 0.8s infinite alternate;
+}
+
+@keyframes flash-alarm-bg {
+    0% { background: rgba(220, 53, 69, 0.96); }
+    100% { background: rgba(176, 42, 55, 0.98); }
+}
+
+.alarm-icon-bounce {
+    font-size: 4.5rem;
+    animation: bounce 0.6s infinite alternate;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-16px); }
+}
+
+.btn-stop-alarm {
+    background-color: #ffffff;
+    color: #dc3545;
+    font-size: 1.4rem;
+    font-weight: 800;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-stop-alarm:hover, .btn-stop-alarm:active {
+    background-color: #f8f9fa;
+    color: #b02a37;
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+}
+
+/* Autocomplete de Busca */
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    max-height: 240px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 0.9rem;
+}
+
+.autocomplete-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Botões Mobile-First */
+.btn-action-mobile {
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    border-radius: 12px;
+}
+
+/* Toast Container flutuante */
+.toast-container-custom {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1060;
+    max-width: 90vw;
+}
+
+@media (max-width: 576px) {
+    .toast-container-custom {
+        left: 15px;
+        right: 15px;
+        top: 15px;
+        max-width: unset;
+    }
+}
