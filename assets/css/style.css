@@ -90,14 +90,14 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 }
 
 /* ========================================================
-   NAVBAR BARBEARIA PREMIUM & COMPONENTES SUPERIORES
+   NAVBAR BARBEARIA PREMIUM & COMPONENTES SUPERIORES (UX/UI)
    ======================================================== */
 .navbar-barber {
     background: rgba(10, 11, 14, 0.96);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(220, 38, 38, 0.35);
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(239, 68, 68, 0.15);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
     padding: 8px 0;
     transition: all 0.3s ease;
     z-index: 1030;
@@ -105,7 +105,18 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 
 .navbar-brand {
     padding: 0;
-    margin-right: 1.5rem;
+    margin-right: 1.25rem;
+}
+
+@media (max-width: 575.98px) {
+    .navbar-brand .barber-logo-emblem {
+        width: 34px !important;
+        height: 34px !important;
+    }
+    .navbar-brand .brand-title {
+        font-size: 1.15rem !important;
+        letter-spacing: 1px !important;
+    }
 }
 
 /* Botão Mobile Barbershop */
@@ -114,7 +125,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     border: 1px solid rgba(220, 38, 38, 0.4) !important;
     border-radius: 8px !important;
     color: var(--red-light) !important;
-    padding: 5px 10px !important;
+    padding: 4px 8px !important;
     transition: all 0.25s ease;
     outline: none !important;
     box-shadow: none !important;
@@ -124,75 +135,99 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 .navbar-toggler-barber:focus {
     background: rgba(220, 38, 38, 0.22) !important;
     border-color: var(--red-light) !important;
-    box-shadow: 0 0 14px rgba(220, 38, 38, 0.4) !important;
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.4) !important;
     color: #ffffff !important;
 }
 
-/* Links de Navegação do Topo */
-.navbar-barber .nav-link {
-    color: #cbd5e1;
+/* Botão Rápido de Agendamento no Topo Mobile */
+.btn-nav-cta-mobile {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    color: #ffffff !important;
+    border: 1px solid #ef4444;
     font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 500;
-    letter-spacing: 0.8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    padding: 8px 14px !important;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    padding: 5px 12px;
+    border-radius: 20px;
     display: inline-flex;
     align-items: center;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.35);
+    text-decoration: none;
 }
 
-.navbar-barber .nav-link:hover {
+.btn-nav-cta-mobile:hover {
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
     color: #ffffff !important;
-    background: rgba(220, 38, 38, 0.1);
-    transform: translateY(-1px);
 }
 
-.navbar-barber .nav-link.active {
-    color: var(--red-light) !important;
-    font-weight: 700;
-    background: rgba(220, 38, 38, 0.15);
+/* Links de Navegação do Topo (Desktop) */
+@media (min-width: 992px) {
+    .navbar-barber .nav-link {
+        color: #cbd5e1;
+        font-family: var(--font-heading);
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        padding: 6px 12px !important;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .navbar-barber .nav-link:hover {
+        color: #ffffff !important;
+        background: rgba(220, 38, 38, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .navbar-barber .nav-link.active {
+        color: var(--red-light) !important;
+        font-weight: 700;
+        background: rgba(220, 38, 38, 0.15);
+    }
 }
 
-/* Destaque "Agendar Atendimento" no Menu */
+/* Destaque "Agendar" no Menu Desktop */
 .btn-nav-cta {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(185, 28, 28, 0.35) 100%);
-    border: 1px solid rgba(239, 68, 68, 0.6) !important;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    border: 1px solid #ef4444 !important;
     color: #ffffff !important;
     font-family: var(--font-heading);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 600;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    padding: 7px 18px !important;
-    border-radius: 30px;
-    box-shadow: 0 0 14px rgba(220, 38, 38, 0.25);
+    padding: 6px 15px !important;
+    border-radius: 25px;
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.35);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     transition: all 0.25s ease;
     text-decoration: none;
     white-space: nowrap;
 }
 
 .btn-nav-cta:hover {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    border-color: #ef4444 !important;
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    border-color: #f87171 !important;
     color: #ffffff !important;
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.55);
+    box-shadow: 0 0 18px rgba(220, 38, 38, 0.6);
     transform: translateY(-1px);
 }
 
-/* Campo de Busca no Navbar */
+/* Campo de Busca no Navbar (Compacto & Expansível) */
 .nav-search-wrap {
     position: relative;
-    width: 220px;
+    width: 140px;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-search-wrap:focus-within {
-    width: 280px;
+    width: 210px;
 }
 
 .nav-search-input {
@@ -200,8 +235,8 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     border: 1px solid rgba(220, 38, 38, 0.3);
     border-radius: 30px;
     color: #ffffff;
-    padding: 7px 14px 7px 36px;
-    font-size: 0.84rem;
+    padding: 6px 12px 6px 34px;
+    font-size: 0.82rem;
     font-family: var(--font-body);
     transition: all 0.25s ease;
 }
@@ -209,7 +244,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 .nav-search-input:focus {
     background: #141720;
     border-color: var(--red-light);
-    box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
     color: #ffffff;
     outline: none;
 }
@@ -221,18 +256,43 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 
 .nav-search-icon {
     position: absolute;
-    left: 12px;
+    left: 11px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--red-light);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    pointer-events: none;
+}
+
+/* Campo de Busca Mobile na Gaveta */
+.nav-search-wrap-mobile {
+    position: relative;
+    width: 100%;
+}
+
+.nav-search-wrap-mobile .nav-search-input {
+    width: 100%;
+    padding: 10px 16px 10px 38px;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.nav-search-wrap-mobile .nav-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--red-light);
+    font-size: 0.9rem;
     pointer-events: none;
 }
 
 /* Botões do Menu Superior */
 .btn-nav {
-    padding: 7px 16px !important;
-    font-size: 0.88rem !important;
+    padding: 6px 14px !important;
+    font-size: 0.86rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.5px;
     border-radius: var(--radius-sm) !important;
@@ -244,11 +304,12 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     background: rgba(19, 21, 28, 0.9);
     border: 1px solid rgba(220, 38, 38, 0.35);
     color: #ffffff;
-    padding: 6px 14px;
-    border-radius: 10px;
+    padding: 5px 12px;
+    border-radius: 8px;
     font-size: 0.88rem;
     font-family: var(--font-body);
     transition: all 0.25s ease;
+    white-space: nowrap;
 }
 
 .btn-nav-user:hover,
@@ -256,7 +317,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 .btn-nav-user[aria-expanded="true"] {
     background: #1b1e28;
     border-color: var(--red-light);
-    box-shadow: 0 0 14px rgba(220, 38, 38, 0.35);
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.35);
     color: #ffffff;
 }
 
@@ -269,8 +330,9 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     border: 1px solid rgba(220, 38, 38, 0.4);
+    flex-shrink: 0;
 }
 
 /* Badges de Identificação (Padronizadas com as cores da Barbearia) */
@@ -730,50 +792,72 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     letter-spacing: 1px;
 }
 
+/* ========================================================
+   GAVETA OFFCANVAS & ADAPTAÇÕES MOBILE (UX/UI PREMIUM)
+   ======================================================== */
 @media (max-width: 991.98px) {
-    .navbar-barber .navbar-collapse {
-        background: rgba(14, 16, 22, 0.98);
-        border: 1px solid rgba(220, 38, 38, 0.3);
-        border-radius: 14px;
-        padding: 16px 20px;
-        margin-top: 14px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.85);
+    .barber-offcanvas {
+        background-color: #0c0e14 !important;
+        background-image: radial-gradient(circle at 100% 0%, rgba(220, 38, 38, 0.18) 0%, transparent 60%) !important;
+        border-left: 1px solid rgba(220, 38, 38, 0.35) !important;
+        box-shadow: -15px 0 45px rgba(0, 0, 0, 0.85) !important;
+        max-width: 320px;
+        width: 85%;
     }
-    .navbar-barber .nav-item {
+
+    .barber-offcanvas .offcanvas-header {
+        background: rgba(10, 11, 14, 0.95);
+    }
+
+    .barber-offcanvas .nav-link {
+        padding: 12px 14px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #cbd5e1;
+        font-size: 1.02rem;
+        font-family: var(--font-heading);
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+        transition: all 0.2s ease;
     }
-    .navbar-barber .nav-item:last-child {
-        border-bottom: none;
+
+    .barber-offcanvas .nav-link:hover,
+    .barber-offcanvas .nav-link:active {
+        background: rgba(220, 38, 38, 0.12);
+        color: #ffffff !important;
+        padding-left: 18px !important;
     }
-    .navbar-barber .nav-link {
-        padding: 10px 4px !important;
-        width: 100%;
+
+    .mobile-user-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(220, 38, 38, 0.25);
+        border-radius: 12px;
     }
-    .navbar-barber .btn-nav-cta {
-        margin: 10px 0 6px 0 !important;
-        width: 100%;
-        justify-content: center;
+
+    .mobile-nav-link {
+        color: #cbd5e1;
+        padding: 8px 10px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        font-size: 0.92rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
     }
-    .nav-search-wrap {
-        width: 100% !important;
-        margin: 10px 0 !important;
+
+    .mobile-nav-link:hover {
+        background: rgba(220, 38, 38, 0.15);
+        color: #ffffff;
     }
-    .nav-search-wrap:focus-within {
-        width: 100% !important;
-    }
-    .nav-user-area {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        width: 100%;
-    }
-    .nav-auth-buttons {
-        width: 100%;
-    }
-    .nav-auth-buttons .btn {
-        flex: 1;
-        text-align: center;
-    }
+}
+
+.offcanvas-backdrop.show {
+    opacity: 0.75;
+    background-color: #000000;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 @media (max-width: 768px) {

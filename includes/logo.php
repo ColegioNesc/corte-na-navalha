@@ -60,7 +60,7 @@ $d = $dimensoes[$logoTamanho] ?? $dimensoes['normal'];
             <span class="brand-title fw-bold text-white" style="font-size: <?= $d['titulo'] ?>; letter-spacing: 1.5px; font-family: 'Oswald', 'Bebas Neue', sans-serif;">
                 CORTE NA <span class="text-danger" style="color: #ef4444 !important;">NAVALHA</span>
             </span>
-            <span class="brand-subtitle text-uppercase" style="font-size: <?= $d['sub'] ?>; letter-spacing: 2.5px; color: #94a3b8; font-weight: 600;">
+            <span class="brand-subtitle text-uppercase d-none d-sm-block" style="font-size: <?= $d['sub'] ?>; letter-spacing: 2.5px; color: #94a3b8; font-weight: 600;">
                 Barbearia Tradicional
             </span>
         </div>

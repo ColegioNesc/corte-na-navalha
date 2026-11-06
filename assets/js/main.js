@@ -43,6 +43,16 @@ document.addEventListener('DOMContentLoaded', function () {
             e.target.value = v;
         });
     });
+
+    // 3. Fechamento suave do menu mobile Offcanvas ao clicar em links
+    const offcanvasEl = document.getElementById('navBarberOffcanvas');
+    if (offcanvasEl) {
+        offcanvasEl.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+            link.addEventListener('click', function () {
+                fecharOffcanvasMobile();
+            });
+        });
+    }
 });
 
 /**
@@ -123,6 +133,19 @@ function executarBuscaGlobal(inputEl) {
         // Redireciona para o início na seção de serviços de forma dinâmica
         const baseUrl = window.BASE_URL || '';
         window.location.href = baseUrl + '/index.php#servicos';
+    }
+}
+
+/**
+ * Fecha a gaveta Offcanvas do menu mobile programaticamente
+ */
+function fecharOffcanvasMobile() {
+    const offcanvasEl = document.getElementById('navBarberOffcanvas');
+    if (offcanvasEl && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+        const instance = bootstrap.Offcanvas.getInstance(offcanvasEl) || new bootstrap.Offcanvas(offcanvasEl);
+        if (instance) {
+            instance.hide();
+        }
     }
 }
 
