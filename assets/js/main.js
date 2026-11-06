@@ -96,8 +96,8 @@ function showToast(tipo, titulo, mensagem) {
 /**
  * Busca Global do Sistema - Filtra procedimentos e barbeiros na página ou redireciona
  */
-function executarBuscaGlobal() {
-    const input = document.getElementById('navbarSearch');
+function executarBuscaGlobal(inputEl) {
+    const input = inputEl || document.getElementById('navbarSearch') || document.getElementById('navbarSearchMobile');
     if (!input) return;
     const termo = input.value.trim().toLowerCase();
     if (!termo) return;
@@ -120,8 +120,9 @@ function executarBuscaGlobal() {
         });
         showToast('info', 'Busca Realizada', `Exibindo ${encontrados} procedimento(s) encontrado(s) para "${termo}".`);
     } else {
-        // Redireciona para o início com o termo
-        window.location.href = window.location.origin + '/corte-na-navalha-main/index.php#servicos';
+        // Redireciona para o início na seção de serviços de forma dinâmica
+        const baseUrl = window.BASE_URL || '';
+        window.location.href = baseUrl + '/index.php#servicos';
     }
 }
 

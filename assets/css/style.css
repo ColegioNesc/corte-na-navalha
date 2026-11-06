@@ -89,46 +89,120 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     color: #ffffff !important;
 }
 
-/* Navbar Barbearia */
+/* ========================================================
+   NAVBAR BARBEARIA PREMIUM & COMPONENTES SUPERIORES
+   ======================================================== */
 .navbar-barber {
     background: rgba(10, 11, 14, 0.96);
-    backdrop-filter: blur(14px);
-    border-bottom: 2px solid var(--border-color);
-    padding: 12px 0;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.35);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(239, 68, 68, 0.15);
+    padding: 8px 0;
     transition: all 0.3s ease;
+    z-index: 1030;
 }
 
 .navbar-brand {
     padding: 0;
+    margin-right: 1.5rem;
 }
 
-.nav-link {
-    color: var(--text-secondary);
-    font-family: var(--font-heading);
-    font-size: 1.05rem;
-    letter-spacing: 0.5px;
-    padding: 8px 14px !important;
-    transition: all 0.2s ease;
-}
-
-.nav-link:hover, .nav-link.active {
+/* Botão Mobile Barbershop */
+.navbar-toggler-barber {
+    background: rgba(220, 38, 38, 0.1) !important;
+    border: 1px solid rgba(220, 38, 38, 0.4) !important;
+    border-radius: 8px !important;
     color: var(--red-light) !important;
+    padding: 5px 10px !important;
+    transition: all 0.25s ease;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.navbar-toggler-barber:hover,
+.navbar-toggler-barber:focus {
+    background: rgba(220, 38, 38, 0.22) !important;
+    border-color: var(--red-light) !important;
+    box-shadow: 0 0 14px rgba(220, 38, 38, 0.4) !important;
+    color: #ffffff !important;
+}
+
+/* Links de Navegação do Topo */
+.navbar-barber .nav-link {
+    color: #cbd5e1;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 8px 14px !important;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.navbar-barber .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(220, 38, 38, 0.1);
     transform: translateY(-1px);
 }
 
-/* Campo de Pesquisa no Navbar */
+.navbar-barber .nav-link.active {
+    color: var(--red-light) !important;
+    font-weight: 700;
+    background: rgba(220, 38, 38, 0.15);
+}
+
+/* Destaque "Agendar Atendimento" no Menu */
+.btn-nav-cta {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(185, 28, 28, 0.35) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.6) !important;
+    color: #ffffff !important;
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 7px 18px !important;
+    border-radius: 30px;
+    box-shadow: 0 0 14px rgba(220, 38, 38, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-nav-cta:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.55);
+    transform: translateY(-1px);
+}
+
+/* Campo de Busca no Navbar */
 .nav-search-wrap {
     position: relative;
-    min-width: 260px;
+    width: 220px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-search-wrap:focus-within {
+    width: 280px;
 }
 
 .nav-search-input {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(220, 38, 38, 0.35);
+    border: 1px solid rgba(220, 38, 38, 0.3);
     border-radius: 30px;
     color: #ffffff;
-    padding: 8px 16px 8px 36px;
-    font-size: 0.88rem;
+    padding: 7px 14px 7px 36px;
+    font-size: 0.84rem;
+    font-family: var(--font-body);
     transition: all 0.25s ease;
 }
 
@@ -142,6 +216,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 
 .nav-search-input::placeholder {
     color: var(--text-muted);
+    font-size: 0.82rem;
 }
 
 .nav-search-icon {
@@ -150,16 +225,61 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     top: 50%;
     transform: translateY(-50%);
     color: var(--red-light);
+    font-size: 0.85rem;
     pointer-events: none;
 }
 
-/* Badges de Identificação de Usuário (Cliente vs Profissional) */
+/* Botões do Menu Superior */
+.btn-nav {
+    padding: 7px 16px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    border-radius: var(--radius-sm) !important;
+    white-space: nowrap;
+}
+
+/* Botão do Usuário Conectado no Navbar */
+.btn-nav-user {
+    background: rgba(19, 21, 28, 0.9);
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-family: var(--font-body);
+    transition: all 0.25s ease;
+}
+
+.btn-nav-user:hover,
+.btn-nav-user:focus,
+.btn-nav-user[aria-expanded="true"] {
+    background: #1b1e28;
+    border-color: var(--red-light);
+    box-shadow: 0 0 14px rgba(220, 38, 38, 0.35);
+    color: #ffffff;
+}
+
+.nav-avatar-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.2);
+    color: var(--red-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border: 1px solid rgba(220, 38, 38, 0.4);
+}
+
+/* Badges de Identificação (Padronizadas com as cores da Barbearia) */
 .badge-role-cliente {
-    background: rgba(37, 99, 235, 0.18);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    font-size: 0.75rem;
-    padding: 5px 10px;
+    background: rgba(148, 163, 184, 0.14);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    font-size: 0.72rem;
+    padding: 4px 10px;
     border-radius: 20px;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -167,16 +287,91 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 }
 
 .badge-role-profissional {
-    background: rgba(220, 38, 38, 0.22);
-    color: #f87171;
-    border: 1px solid #ef4444;
-    font-size: 0.75rem;
-    padding: 5px 12px;
+    background: rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.55);
+    font-size: 0.72rem;
+    padding: 4px 10px;
     border-radius: 20px;
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    box-shadow: 0 0 10px rgba(220, 38, 38, 0.35);
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.25);
+}
+
+.badge-role-dono {
+    background: rgba(212, 175, 55, 0.15);
+    color: #fef08a;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+}
+
+.badge-role-recepcao {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fde68a;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Dropdown Menu Barbearia */
+.barber-dropdown-menu {
+    background: #11131a !important;
+    border: 1px solid rgba(220, 38, 38, 0.4) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(220, 38, 38, 0.15) !important;
+    padding: 8px !important;
+    min-width: 240px;
+    animation: dropdownFade 0.2s ease forwards;
+}
+
+@keyframes dropdownFade {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.barber-dropdown-menu .dropdown-item {
+    color: #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.barber-dropdown-menu .dropdown-item:hover {
+    background: rgba(220, 38, 38, 0.15) !important;
+    color: #ffffff !important;
+    transform: translateX(4px);
+}
+
+.barber-dropdown-menu .dropdown-item i {
+    transition: color 0.2s ease;
+}
+
+.barber-dropdown-menu .dropdown-item:hover i {
+    color: var(--red-light) !important;
+}
+
+.barber-dropdown-menu .dropdown-item.text-danger-custom {
+    color: #f87171 !important;
+}
+
+.barber-dropdown-menu .dropdown-item.text-danger-custom:hover {
+    background: rgba(220, 38, 38, 0.25) !important;
+    color: #fca5a5 !important;
 }
 
 /* Botões do Sistema - Vermelho Rubro com Estilo e Brilho */
@@ -535,12 +730,54 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     letter-spacing: 1px;
 }
 
+@media (max-width: 991.98px) {
+    .navbar-barber .navbar-collapse {
+        background: rgba(14, 16, 22, 0.98);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-top: 14px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.85);
+    }
+    .navbar-barber .nav-item {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .navbar-barber .nav-item:last-child {
+        border-bottom: none;
+    }
+    .navbar-barber .nav-link {
+        padding: 10px 4px !important;
+        width: 100%;
+    }
+    .navbar-barber .btn-nav-cta {
+        margin: 10px 0 6px 0 !important;
+        width: 100%;
+        justify-content: center;
+    }
+    .nav-search-wrap {
+        width: 100% !important;
+        margin: 10px 0 !important;
+    }
+    .nav-search-wrap:focus-within {
+        width: 100% !important;
+    }
+    .nav-user-area {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        width: 100%;
+    }
+    .nav-auth-buttons {
+        width: 100%;
+    }
+    .nav-auth-buttons .btn {
+        flex: 1;
+        text-align: center;
+    }
+}
+
 @media (max-width: 768px) {
     .hero-title {
         font-size: 2.3rem;
-    }
-    .nav-search-wrap {
-        min-width: 100%;
-        margin-top: 10px;
     }
 }

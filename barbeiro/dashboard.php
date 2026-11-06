@@ -178,7 +178,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="row g-3">
                 <?php foreach ($atendimentosHoje as $ag): ?>
                     <div class="col-lg-6">
-                        <div class="barber-card p-4 h-100 d-flex flex-column justify-content-between border-start border-4 <?= ($ag['status_atendimento'] === 'em_atendimento') ? 'border-primary' : (($ag['status_atendimento'] === 'concluido') ? 'border-success' : 'border-warning') ?>">
+                        <div class="barber-card p-4 h-100 d-flex flex-column justify-content-between border-start border-4 <?= ($ag['status_atendimento'] === 'em_atendimento') ? 'border-danger' : (($ag['status_atendimento'] === 'concluido') ? 'border-success' : 'border-warning') ?>">
                             <div>
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>

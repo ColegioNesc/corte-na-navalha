@@ -22,20 +22,51 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
-// URL Base do Sistema (detectada dinamicamente)
+// URL Base do Sistema (detectada dinamicamente para raiz do domínio ou qualquer subpasta)
 if (!defined('BASE_URL')) {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $protocol = $isHttps ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $dir = rtrim(dirname($script), '/\\');
     
-    // Normalizar base para apontar para a raiz do projeto corte
-    if (strpos($dir, '/corte') !== false) {
-        $parts = explode('/corte', $dir);
-        $baseUrl = $protocol . $host . $parts[0] . '/corte';
-    } else {
-        $baseUrl = $protocol . $host . '/corte';
+    // Raiz do projeto no disco (diretório pai de /config)
+    $projectRoot = str_replace('\\', '/', rtrim(realpath(__DIR__ . '/..') ?: (__DIR__ . '/..'), '/\\'));
+    $scriptFilename = isset($_SERVER['SCRIPT_FILENAME']) ? str_replace('\\', '/', realpath($_SERVER['SCRIPT_FILENAME']) ?: $_SERVER['SCRIPT_FILENAME']) : '';
+    $scriptName = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) : '';
+
+    $basePath = null;
+
+    // 1. Derivar caminho relativo a partir do script executado
+    if ($scriptFilename && $scriptName && str_starts_with(strtolower($scriptFilename), strtolower($projectRoot))) {
+        $relPath = substr($scriptFilename, strlen($projectRoot));
+        if ($relPath === '' || $relPath === '/') {
+            $basePath = dirname($scriptName);
+        } elseif (str_ends_with(strtolower($scriptName), strtolower($relPath))) {
+            $basePath = substr($scriptName, 0, strlen($scriptName) - strlen($relPath));
+        }
     }
+
+    // 2. Comparar raiz do projeto com DOCUMENT_ROOT
+    if ($basePath === null && !empty($_SERVER['DOCUMENT_ROOT'])) {
+        $docRoot = str_replace('\\', '/', rtrim(realpath($_SERVER['DOCUMENT_ROOT']) ?: $_SERVER['DOCUMENT_ROOT'], '/\\'));
+        if ($docRoot !== '' && str_starts_with(strtolower($projectRoot), strtolower($docRoot))) {
+            $basePath = substr($projectRoot, strlen($docRoot));
+        }
+    }
+
+    // 3. Fallback seguro
+    if ($basePath === null) {
+        $basePath = str_replace('\\', '/', dirname($scriptName));
+    }
+
+    // Normalizar basePath (remover barras duplicadas e garantir que raiz seja vazia)
+    $basePath = '/' . trim((string)$basePath, '/\\');
+    if ($basePath === '/') {
+        $basePath = '';
+    }
+
+    $baseUrl = rtrim($protocol . $host . $basePath, '/');
     define('BASE_URL', $baseUrl);
 }
 

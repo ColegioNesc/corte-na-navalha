@@ -27,6 +27,10 @@ $usuarioAtual = getUsuarioLogado();
     
     <!-- Estilo Oficial da Barbearia -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
+    
+    <script>
+        window.BASE_URL = <?= json_encode(BASE_URL) ?>;
+    </script>
 </head>
 <body>
 <?php require_once __DIR__ . '/toast.php'; ?>
