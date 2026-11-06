@@ -85,6 +85,41 @@ function redirecionarPorPerfil($perfil) {
 }
 
 /**
+ * Retorna se o usuário é um profissional (Barbeiro, Recepção ou Dono)
+ */
+function isProfissional($usuario = null) {
+    if (!$usuario) $usuario = getUsuarioLogado();
+    if (!$usuario) return false;
+    return in_array($usuario['perfil'], ['barbeiro', 'recepcao', 'dono']);
+}
+
+/**
+ * Retorna se o usuário é um cliente
+ */
+function isCliente($usuario = null) {
+    if (!$usuario) $usuario = getUsuarioLogado();
+    if (!$usuario) return false;
+    return ($usuario['perfil'] === 'cliente');
+}
+
+/**
+ * Retorna o título legível da categoria do usuário (Cliente ou Profissional)
+ */
+function getTipoUsuarioFormatado($perfil) {
+    switch ($perfil) {
+        case 'barbeiro':
+            return 'Profissional (Barbeiro)';
+        case 'recepcao':
+            return 'Profissional (Recepção)';
+        case 'dono':
+            return 'Profissional (Proprietário)';
+        case 'cliente':
+        default:
+            return 'Cliente';
+    }
+}
+
+/**
  * Define mensagens estilo Toast para exibição na próxima tela
  */
 function setMensagemToast($tipo, $titulo, $mensagem) {

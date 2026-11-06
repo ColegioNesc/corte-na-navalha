@@ -114,9 +114,9 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <!-- Filtros de Busca -->
+    <!-- Filtros de Busca e Pesquisa em Tempo Real -->
     <div class="barber-card p-3 mb-4">
-        <form method="GET" class="row g-3 align-items-end">
+        <form method="GET" class="row g-3 align-items-end mb-3">
             <div class="col-md-4">
                 <label for="data" class="form-label">Data de Consulta</label>
                 <input type="date" class="form-control" id="data" name="data" value="<?= htmlspecialchars($dataFiltro) ?>">
@@ -133,11 +133,24 @@ require_once __DIR__ . '/../includes/header.php';
                 </select>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-outline-gold w-100 py-2">
+                <button type="submit" class="btn btn-red w-100 py-2 fw-bold">
                     <i class="bi bi-funnel me-1"></i> Filtrar Agenda
                 </button>
             </div>
         </form>
+
+        <!-- Campo de Pesquisa em Tempo Real para Recepção -->
+        <div class="pt-3 border-top border-secondary border-opacity-25">
+            <label for="buscaRecepcao" class="form-label small fw-bold text-uppercase d-flex align-items-center gap-1">
+                <i class="bi bi-search text-danger"></i> Pesquisar Atendimentos do Dia:
+            </label>
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-danger">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="buscaRecepcao" class="form-control" placeholder="Buscar por nome do cliente, CPF, telefone ou código de reserva..." oninput="filtrarTabelaRecepcao()">
+            </div>
+        </div>
     </div>
 
     <!-- Tabela de Agendamentos do Dia -->
@@ -201,11 +214,16 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td class="text-end pe-3">
                                     <div class="d-flex justify-content-end gap-1">
                                         <?php if ($ag['status_pagamento'] === 'pendente'): ?>
-                                            <!-- Botão de Baixa / Receber no Balcão -->
+                                            <!-- Botão de Cobrança com QR Code PIX no Balcão -->
+                                            <button type="button" class="btn btn-sm btn-danger py-1 px-2 fw-bold" onclick="abrirModalQrCode(<?= $ag['id'] ?>, '<?= htmlspecialchars(addslashes($ag['cliente_nome'])) ?>', '<?= number_format($ag['valor_total'], 2, ',', '.') ?>', '<?= htmlspecialchars(addslashes($ag['procedimentos'])) ?>', '<?= $ag['codigo_reserva'] ?>')" title="Apresentar QR Code para Pagamento">
+                                                <i class="bi bi-qr-code me-1"></i> QR Code PIX
+                                            </button>
+
+                                            <!-- Botão de Baixa Direta no Balcão -->
                                             <form action="<?= BASE_URL ?>/actions/agendamento_pagar.php" method="POST" class="d-inline">
                                                 <input type="hidden" name="agendamento_id" value="<?= $ag['id'] ?>">
                                                 <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
-                                                <button type="submit" class="btn btn-sm btn-success py-1 px-2" title="Confirmar Recebimento do Pagamento">
+                                                <button type="submit" class="btn btn-sm btn-success py-1 px-2" title="Confirmar Recebimento em Dinheiro/Cartão">
                                                     <i class="bi bi-cash-coin me-1"></i> Receber
                                                 </button>
                                             </form>
@@ -223,7 +241,7 @@ require_once __DIR__ . '/../includes/header.php';
                                             </form>
                                         <?php endif; ?>
 
-                                        <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Ver Comprovante">
+                                        <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Ver Comprovante Oficial">
                                             <i class="bi bi-receipt"></i>
                                         </a>
                                     </div>
@@ -236,5 +254,24 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const cobrarId = params.get('cobrar_id') || params.get('concluido_id');
+    if (cobrarId) {
+        abrirModalQrCode(cobrarId);
+    }
+});
+
+function filtrarTabelaRecepcao() {
+    const termo = (document.getElementById('buscaRecepcao').value || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(tr => {
+        const txt = tr.innerText.toLowerCase();
+        tr.style.display = txt.includes(termo) ? '' : 'none';
+    });
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

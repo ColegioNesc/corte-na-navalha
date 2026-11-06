@@ -200,8 +200,15 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- Atendimentos Recentes -->
     <div class="barber-card p-0">
         <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-            <h5 class="text-white mb-0 fw-bold"><i class="bi bi-list-stars text-gold me-2"></i>Últimos Agendamentos no Sistema</h5>
+            <h5 class="text-white mb-0 fw-bold"><i class="bi bi-list-stars text-danger me-2"></i>Últimos Agendamentos no Sistema</h5>
             <span class="text-secondary small">Exibindo os 10 mais recentes</span>
+        </div>
+        <!-- Campo de Pesquisa em Tempo Real nos Recentes -->
+        <div class="p-3 border-bottom border-secondary border-opacity-25 bg-dark bg-opacity-50">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-danger"><i class="bi bi-search"></i></span>
+                <input type="text" id="filtroAtendimentosRecentes" class="form-control" placeholder="Buscar nos agendamentos por cliente, barbeiro, procedimento ou código..." oninput="filtrarAtendimentosRecentes()">
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-dark table-hover mb-0 align-middle">
@@ -249,5 +256,16 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+function filtrarAtendimentosRecentes() {
+    const termo = (document.getElementById('filtroAtendimentosRecentes').value || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('.table-responsive:last-of-type tbody tr');
+    rows.forEach(tr => {
+        const txt = tr.innerText.toLowerCase();
+        tr.style.display = txt.includes(termo) ? '' : 'none';
+    });
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

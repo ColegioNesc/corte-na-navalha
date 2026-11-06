@@ -66,8 +66,16 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- Tabela de Colaboradores -->
     <div class="barber-card p-0 mb-5">
         <div class="p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-            <h5 class="text-white mb-0 fw-bold"><i class="bi bi-person-badge text-gold me-2"></i>Profissionais Cadastrados</h5>
+            <h5 class="text-white mb-0 fw-bold"><i class="bi bi-person-badge text-danger me-2"></i>Profissionais Cadastrados</h5>
             <span class="text-secondary small">Total: <?= count($funcionarios) ?></span>
+        </div>
+
+        <!-- Campo de Pesquisa em Tempo Real de Funcionários -->
+        <div class="p-3 border-bottom border-secondary border-opacity-25 bg-dark bg-opacity-50">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-danger"><i class="bi bi-search"></i></span>
+                <input type="text" id="filtroAdminFuncionarios" class="form-control" placeholder="Pesquisar profissionais por nome, perfil, e-mail ou chave PIX..." oninput="filtrarAdminFuncionarios()">
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -318,6 +326,15 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
+function filtrarAdminFuncionarios() {
+    const termo = (document.getElementById('filtroAdminFuncionarios').value || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(tr => {
+        const txt = tr.innerText.toLowerCase();
+        tr.style.display = txt.includes(termo) ? '' : 'none';
+    });
+}
+
 function abrirModalFuncionario() {
     document.getElementById('modalFuncionarioTitulo').innerText = 'Cadastrar Colaborador';
     document.getElementById('funcId').value = 0;

@@ -57,27 +57,38 @@ require_once __DIR__ . '/../includes/header.php';
                     
                     <!-- PASSO 1: Escolha de Procedimentos / Serviços -->
                     <div class="mb-4">
-                        <label class="form-label d-flex justify-content-between align-items-center">
-                            <span>1. Escolha os Procedimentos (Corte, Barba ou Ambos)</span>
-                            <span class="badge bg-dark border border-secondary text-gold">Seleção Múltipla</span>
-                        </label>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">1. Escolha os Procedimentos (Corte, Barba ou Ambos)</label>
+                            <span class="badge bg-danger text-white">Seleção Múltipla</span>
+                        </div>
 
-                        <div class="row g-3">
+                        <!-- Campo de Pesquisa em Tempo Real de Serviços -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-danger">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" id="buscaProcedimento" class="form-control" placeholder="Pesquisar corte, barba, sobrancelha, degradê..." aria-label="Pesquisar procedimentos" oninput="filtrarProcedimentosAgendar()">
+                            </div>
+                            <small class="text-muted" style="font-size: 0.75rem;">Digite para filtrar a lista de procedimentos abaixo instantaneamente.</small>
+                        </div>
+
+                        <div class="row g-3" id="containerListaProcedimentos">
                             <?php foreach ($servicos as $srv): ?>
                                 <?php 
                                     $isCheck = ($srv['id'] === $servicoPreSelecionado);
                                 ?>
-                                <div class="col-md-6">
+                                <div class="col-md-6 item-servico-col">
                                     <div class="p-3 rounded border border-secondary border-opacity-25 h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico(<?= $srv['id'] ?>)">
                                         <div class="form-check d-flex align-items-start gap-2">
                                             <input class="form-check-input mt-1 check-servico" type="checkbox" name="servicos[]" value="<?= $srv['id'] ?>" id="srv_<?= $srv['id'] ?>" data-preco="<?= $srv['preco'] ?>" data-tempo="<?= $srv['tempo_minutos'] ?>" data-nome="<?= htmlspecialchars($srv['nome']) ?>" <?= $isCheck ? 'checked' : '' ?> onclick="event.stopPropagation(); atualizarResumo();">
                                             <label class="form-check-label w-100" for="srv_<?= $srv['id'] ?>" style="cursor: pointer;">
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <strong class="text-white"><?= htmlspecialchars($srv['nome']) ?></strong>
-                                                    <span class="text-gold fw-bold">R$ <?= number_format($srv['preco'], 2, ',', '.') ?></span>
+                                                    <strong class="text-white item-servico-nome"><?= htmlspecialchars($srv['nome']) ?></strong>
+                                                    <span class="text-danger fw-bold">R$ <?= number_format($srv['preco'], 2, ',', '.') ?></span>
                                                 </div>
-                                                <small class="text-secondary d-block mt-1"><?= htmlspecialchars($srv['descricao']) ?></small>
-                                                <small class="text-muted d-block mt-1"><i class="bi bi-clock me-1"></i><?= $srv['tempo_minutos'] ?> min</small>
+                                                <small class="text-secondary d-block mt-1 item-servico-desc"><?= htmlspecialchars($srv['descricao']) ?></small>
+                                                <small class="text-muted d-block mt-1"><i class="bi bi-clock me-1 text-danger"></i><?= $srv['tempo_minutos'] ?> min</small>
                                             </label>
                                         </div>
                                     </div>
@@ -251,6 +262,20 @@ document.getElementById('formAgendamento').addEventListener('submit', function (
 
 // Inicializar resumo ao carregar página
 document.addEventListener('DOMContentLoaded', atualizarResumo);
+
+function filtrarProcedimentosAgendar() {
+    const termo = (document.getElementById('buscaProcedimento').value || '').trim().toLowerCase();
+    const cols = document.querySelectorAll('.item-servico-col');
+    cols.forEach(col => {
+        const nome = col.querySelector('.item-servico-nome').innerText.toLowerCase();
+        const desc = col.querySelector('.item-servico-desc').innerText.toLowerCase();
+        if (nome.includes(termo) || desc.includes(termo)) {
+            col.style.display = '';
+        } else {
+            col.style.display = 'none';
+        }
+    });
+}
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

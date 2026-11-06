@@ -47,34 +47,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /**
  * Exibe Toast Dinâmico na Tela
+ * Suporte aprimorado para Erros em Vermelho de Alta Visibilidade
  * @param {string} tipo - success, danger, warning, info
  * @param {string} titulo 
  * @param {string} mensagem 
  */
 function showToast(tipo, titulo, mensagem) {
     const container = document.getElementById('toastPlacement') || createToastContainer();
-    const bgMap = {
-        success: 'border-success text-success',
-        danger: 'border-danger text-danger',
-        warning: 'border-warning text-warning',
-        info: 'border-info text-info'
-    };
+    const isDanger = (tipo === 'danger');
+    const isSuccess = (tipo === 'success');
+
+    const toastClass = isDanger ? 'barber-toast-danger' : (isSuccess ? 'barber-toast-success' : 'barber-toast border-warning');
+    const headerBg = isDanger ? 'bg-danger text-white' : (isSuccess ? 'bg-success text-white' : 'bg-dark text-warning border-bottom border-secondary');
+    
     const iconMap = {
-        success: 'bi-check-circle-fill text-success',
-        danger: 'bi-exclamation-triangle-fill text-danger',
+        success: 'bi-check-circle-fill text-white',
+        danger: 'bi-exclamation-octagon-fill text-white',
         warning: 'bi-exclamation-circle-fill text-warning',
         info: 'bi-info-circle-fill text-info'
     };
 
+    const badgeErro = isDanger ? '<span class="badge bg-black text-danger me-1">ERRO</span> ' : '';
+
     const toastHtml = `
-        <div class="toast barber-toast ${bgMap[tipo] || 'border-warning text-warning'}" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header bg-transparent text-white border-bottom border-secondary">
-                <i class="bi ${iconMap[tipo] || 'bi-info-circle'} me-2"></i>
-                <strong class="me-auto">${titulo}</strong>
-                <small class="text-muted">Agora</small>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        <div class="toast barber-toast ${toastClass}" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header ${headerBg} py-2 px-3">
+                <i class="bi ${iconMap[tipo] || 'bi-info-circle'} me-2 fs-5"></i>
+                <strong class="me-auto fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                    ${badgeErro}${titulo}
+                </strong>
+                <small class="${isDanger || isSuccess ? 'text-white-50' : 'text-muted'}">Agora</small>
+                <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            <div class="toast-body text-white">
+            <div class="toast-body py-3 px-3">
                 ${mensagem}
             </div>
         </div>
@@ -84,8 +89,40 @@ function showToast(tipo, titulo, mensagem) {
     wrapper.innerHTML = toastHtml;
     const toastEl = wrapper.firstElementChild;
     container.appendChild(toastEl);
-    const toast = new bootstrap.Toast(toastEl, { delay: 4500 });
+    const toast = new bootstrap.Toast(toastEl, { delay: 6000 });
     toast.show();
+}
+
+/**
+ * Busca Global do Sistema - Filtra procedimentos e barbeiros na página ou redireciona
+ */
+function executarBuscaGlobal() {
+    const input = document.getElementById('navbarSearch');
+    if (!input) return;
+    const termo = input.value.trim().toLowerCase();
+    if (!termo) return;
+
+    // Se estiver na página inicial, rola até serviços e filtra
+    const containerServicos = document.getElementById('servicos');
+    if (containerServicos) {
+        containerServicos.scrollIntoView({ behavior: 'smooth' });
+        const cards = document.querySelectorAll('.card-servico-home');
+        let encontrados = 0;
+        cards.forEach(card => {
+            const texto = card.innerText.toLowerCase();
+            if (texto.includes(termo)) {
+                card.closest('.col-lg-4, .col-md-6').style.display = '';
+                card.classList.add('border-danger');
+                encontrados++;
+            } else {
+                card.closest('.col-lg-4, .col-md-6').style.display = 'none';
+            }
+        });
+        showToast('info', 'Busca Realizada', `Exibindo ${encontrados} procedimento(s) encontrado(s) para "${termo}".`);
+    } else {
+        // Redireciona para o início com o termo
+        window.location.href = window.location.origin + '/corte-na-navalha-main/index.php#servicos';
+    }
 }
 
 function createToastContainer() {

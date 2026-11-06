@@ -147,11 +147,25 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
+    <!-- Barra de Pesquisa de Atendimentos do Barbeiro -->
+    <div class="mb-4">
+        <label for="filtroAtendimentosBarbeiro" class="form-label small fw-bold text-uppercase d-flex align-items-center gap-1">
+            <i class="bi bi-search text-danger"></i> Pesquisar Atendimentos do Barbeiro:
+        </label>
+        <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-danger">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" id="filtroAtendimentosBarbeiro" class="form-control" placeholder="Buscar por nome do cliente, telefone, corte ou código de reserva..." oninput="filtrarAgendaBarbeiro()">
+        </div>
+        <small class="text-muted" style="font-size: 0.75rem;">Digite para localizar instantaneamente qualquer cliente na sua agenda de hoje.</small>
+    </div>
+
     <!-- Agenda de Hoje -->
     <div class="mb-5">
         <h4 class="text-white fw-bold mb-3 d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-clock text-gold me-2"></i>Agenda de Hoje (<?= date('d/m/Y') ?>)</span>
-            <span class="badge bg-gold text-dark"><?= count($atendimentosHoje) ?> clientes marcados</span>
+            <span><i class="bi bi-clock text-danger me-2"></i>Agenda de Hoje (<?= date('d/m/Y') ?>)</span>
+            <span class="badge bg-danger text-white"><?= count($atendimentosHoje) ?> clientes marcados</span>
         </h4>
 
         <?php if (empty($atendimentosHoje)): ?>
@@ -209,26 +223,30 @@ require_once __DIR__ . '/../includes/header.php';
                                     <form action="<?= BASE_URL ?>/actions/agendamento_status.php" method="POST" class="flex-grow-1">
                                         <input type="hidden" name="agendamento_id" value="<?= $ag['id'] ?>">
                                         <input type="hidden" name="status" value="em_atendimento">
+                                        <input type="hidden" name="redirect" value="<?= BASE_URL ?>/barbeiro/dashboard.php">
                                         <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">
-                                            <i class="bi bi-play-fill me-1"></i> Iniciar Atendimento
+                                            <i class="bi bi-play-fill me-1"></i> Iniciar Corte
                                         </button>
                                     </form>
                                 <?php elseif ($ag['status_atendimento'] === 'em_atendimento'): ?>
-                                    <form action="<?= BASE_URL ?>/actions/agendamento_status.php" method="POST" class="flex-grow-1">
-                                        <input type="hidden" name="agendamento_id" value="<?= $ag['id'] ?>">
-                                        <input type="hidden" name="status" value="concluido">
-                                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
-                                            <i class="bi bi-check2-circle me-1"></i> Concluir Corte
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-success btn-sm flex-grow-1 fw-bold" onclick="concluirCorteECobrar(<?= $ag['id'] ?>, '<?= htmlspecialchars(addslashes($ag['cliente_nome'])) ?>', '<?= number_format($ag['valor_total'], 2, ',', '.') ?>', '<?= htmlspecialchars(addslashes($ag['procedimentos'])) ?>', '<?= $ag['codigo_reserva'] ?>')">
+                                        <i class="bi bi-check2-circle me-1"></i> Finalizar & Cobrar PIX
+                                    </button>
+                                <?php endif; ?>
+
+                                <!-- Botão de Cobrança PIX / QR Code (Sempre Clicável) -->
+                                <?php if ($ag['status_pagamento'] === 'pendente'): ?>
+                                    <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="abrirModalQrCode(<?= $ag['id'] ?>, '<?= htmlspecialchars(addslashes($ag['cliente_nome'])) ?>', '<?= number_format($ag['valor_total'], 2, ',', '.') ?>', '<?= htmlspecialchars(addslashes($ag['procedimentos'])) ?>', '<?= $ag['codigo_reserva'] ?>')" title="Abrir QR Code de Pagamento para o Cliente">
+                                        <i class="bi bi-qr-code me-1"></i> Cobrar PIX
+                                    </button>
                                 <?php endif; ?>
 
                                 <!-- Botão de Pedir Feedback no WhatsApp -->
-                                <button type="button" class="btn btn-outline-gold btn-sm" onclick="solicitarFeedbackCliente('<?= htmlspecialchars(addslashes($ag['cliente_nome'])) ?>', '<?= preg_replace('/\D/', '', $ag['cliente_telefone']) ?>', '<?= BASE_URL ?>/cliente/dashboard.php')">
-                                    <i class="bi bi-star-fill text-warning me-1"></i> Pedir Feedback
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="solicitarFeedbackCliente('<?= htmlspecialchars(addslashes($ag['cliente_nome'])) ?>', '<?= preg_replace('/\D/', '', $ag['cliente_telefone']) ?>', '<?= BASE_URL ?>/cliente/dashboard.php')">
+                                    <i class="bi bi-star-fill text-warning me-1"></i> Avaliação
                                 </button>
                                 
-                                <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" class="btn btn-outline-secondary btn-sm" target="_blank" title="Ver Comprovante">
+                                <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" class="btn btn-outline-secondary btn-sm" target="_blank" title="Ver Comprovante Oficial">
                                     <i class="bi bi-receipt"></i>
                                 </a>
                             </div>
@@ -277,6 +295,42 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const concluidoId = params.get('concluido_id') || params.get('cobrar_id');
+    if (concluidoId) {
+        abrirModalQrCode(concluidoId);
+    }
+});
+
+function concluirCorteECobrar(id, nome, valor, procedimentos, codigo) {
+    // 1. Atualizar status para concluído em background
+    const formData = new FormData();
+    formData.append('agendamento_id', id);
+    formData.append('status', 'concluido');
+
+    fetch('<?= BASE_URL ?>/actions/agendamento_status.php', {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        showToast('success', 'Atendimento Concluído!', 'O corte foi finalizado. Apresentando QR Code para pagamento...');
+        // 2. Abrir imediatamente o modal de QR Code e escuta de pagamento
+        abrirModalQrCode(id, nome, valor, procedimentos, codigo);
+    }).catch(err => {
+        // Fallback: abrir modal diretamente
+        abrirModalQrCode(id, nome, valor, procedimentos, codigo);
+    });
+}
+
+function filtrarAgendaBarbeiro() {
+    const termo = (document.getElementById('filtroAtendimentosBarbeiro').value || '').trim().toLowerCase();
+    const cards = document.querySelectorAll('.col-lg-6');
+    cards.forEach(col => {
+        const txt = col.innerText.toLowerCase();
+        col.style.display = txt.includes(termo) ? '' : 'none';
+    });
+}
+
 function solicitarFeedbackCliente(nome, telefone, link) {
     const textoMensagem = encodeURIComponent(
         `Olá ${nome}! Aqui é da Barbearia Corte na Navalha. Seu corte acabou de ser finalizado! ✂️\n\nPoderia avaliar nosso atendimento no app? Acesse: ${link}\n\nObrigado pela preferência e volte sempre!`

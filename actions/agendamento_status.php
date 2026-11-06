@@ -43,6 +43,11 @@ try {
     $stmtUpdate = $pdo->prepare("UPDATE agendamentos SET status_atendimento = :status WHERE id = :id");
     $stmtUpdate->execute([':status' => $novoStatus, ':id' => $agendamentoId]);
 
+    // Ao finalizar o atendimento, gera o QR Code dinâmico para escutar o pagamento
+    if ($novoStatus === 'concluido') {
+        obterOuGerarPixAgendamento($agendamentoId, $pdo);
+    }
+
     $statusNomes = [
         'agendado'       => 'Agendado',
         'em_atendimento' => 'Em Atendimento na Cadeira',
@@ -55,9 +60,11 @@ try {
     if (!empty($redirect)) {
         header('Location: ' . $redirect);
     } elseif ($usuario['perfil'] === 'barbeiro') {
-        header('Location: ' . BASE_URL . '/barbeiro/dashboard.php');
+        $extra = ($novoStatus === 'concluido') ? '?concluido_id=' . $agendamentoId : '';
+        header('Location: ' . BASE_URL . '/barbeiro/dashboard.php' . $extra);
     } elseif ($usuario['perfil'] === 'recepcao') {
-        header('Location: ' . BASE_URL . '/recepcao/dashboard.php');
+        $extra = ($novoStatus === 'concluido') ? '?cobrar_id=' . $agendamentoId : '';
+        header('Location: ' . BASE_URL . '/recepcao/dashboard.php' . $extra);
     } else {
         header('Location: ' . BASE_URL . '/admin/dashboard.php');
     }

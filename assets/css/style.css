@@ -1,35 +1,57 @@
 /* ========================================================
    CORTE NA NAVALHA - ESTILIZAÇÃO OFICIAL BARBERSHOP
-   Estilo Premium Dark & Dourado Vintage
+   Tema Vermelho Crimson Premium & Charcoal Dark
    ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;900&display=swap');
 
 :root {
-    --bg-main: #0c0d10;
-    --bg-card: #15171e;
-    --bg-card-hover: #1c1f28;
-    --bg-input: #101217;
-    --border-color: rgba(197, 160, 89, 0.2);
-    --border-active: #c5a059;
-    --gold: #c5a059;
-    --gold-light: #dfb76c;
-    --gold-dark: #967636;
-    --gold-glow: rgba(197, 160, 89, 0.25);
+    /* Cores Principais - Tema Vermelho Barber */
+    --red-primary: #dc2626;
+    --red-dark: #991b1b;
+    --red-darker: #7f1d1d;
+    --red-light: #ef4444;
+    --red-glow: rgba(220, 38, 38, 0.4);
+    --red-subtle: rgba(220, 38, 38, 0.12);
+
+    /* Backgrounds Dark de Alta Sofisticação */
+    --bg-main: #0a0b0e;
+    --bg-card: #13151c;
+    --bg-card-hover: #1b1e28;
+    --bg-input: #0e1015;
+    --bg-modal: #141720;
+
+    /* Bordas e Detalhes */
+    --border-color: rgba(220, 38, 38, 0.28);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-active: #ef4444;
+
+    /* Dourado Retrô Secundário (Detalhes Metálicos) */
+    --gold: #d4af37;
+    --gold-light: #f3cf65;
+
+    /* Textos */
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
+
+    /* Status */
     --danger: #ef4444;
     --success: #10b981;
     --warning: #f59e0b;
     --info: #06b6d4;
-    --font-heading: 'Cinzel', serif;
+
+    /* Fontes */
+    --font-heading: 'Oswald', 'Bebas Neue', sans-serif;
+    --font-brand: 'Bebas Neue', 'Oswald', sans-serif;
     --font-body: 'Plus Jakarta Sans', sans-serif;
+
+    /* Geometria e Sombras */
     --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 18px;
-    --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-    --shadow-gold: 0 0 20px rgba(197, 160, 89, 0.2);
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-card: 0 12px 30px -5px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(220, 38, 38, 0.1);
+    --shadow-red: 0 0 25px rgba(220, 38, 38, 0.35);
 }
 
 body {
@@ -45,85 +67,153 @@ body {
 /* Tipografia */
 h1, h2, h3, h4, h5, h6, .brand-font {
     font-family: var(--font-heading);
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.text-red, .text-danger-custom {
+    color: var(--red-light) !important;
 }
 
 .text-gold {
-    color: var(--gold) !important;
+    color: var(--red-light) !important; /* Redireciona classes antigas para o tema vermelho vibrante */
 }
 
-.text-gold-light {
-    color: var(--gold-light) !important;
+.bg-red {
+    background-color: var(--red-primary) !important;
+    color: #ffffff !important;
 }
 
 .bg-gold {
-    background-color: var(--gold) !important;
-    color: #0c0d10 !important;
+    background: linear-gradient(135deg, var(--red-light) 0%, var(--red-dark) 100%) !important;
+    color: #ffffff !important;
 }
 
-/* Navbar */
+/* Navbar Barbearia */
 .navbar-barber {
-    background: rgba(15, 17, 21, 0.95);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-color);
-    padding: 14px 0;
+    background: rgba(10, 11, 14, 0.96);
+    backdrop-filter: blur(14px);
+    border-bottom: 2px solid var(--border-color);
+    padding: 12px 0;
     transition: all 0.3s ease;
 }
 
 .navbar-brand {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 1.35rem;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.navbar-brand span {
-    color: var(--gold);
+    padding: 0;
 }
 
 .nav-link {
     color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.95rem;
-    padding: 8px 16px !important;
-    transition: color 0.2s ease;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    padding: 8px 14px !important;
+    transition: all 0.2s ease;
 }
 
 .nav-link:hover, .nav-link.active {
-    color: var(--gold-light) !important;
+    color: var(--red-light) !important;
+    transform: translateY(-1px);
 }
 
-/* Botões Customizados */
-.btn-gold {
-    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
-    color: #0f1115 !important;
+/* Campo de Pesquisa no Navbar */
+.nav-search-wrap {
+    position: relative;
+    min-width: 260px;
+}
+
+.nav-search-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    border-radius: 30px;
+    color: #ffffff;
+    padding: 8px 16px 8px 36px;
+    font-size: 0.88rem;
+    transition: all 0.25s ease;
+}
+
+.nav-search-input:focus {
+    background: #141720;
+    border-color: var(--red-light);
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+    color: #ffffff;
+    outline: none;
+}
+
+.nav-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.nav-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--red-light);
+    pointer-events: none;
+}
+
+/* Badges de Identificação de Usuário (Cliente vs Profissional) */
+.badge-role-cliente {
+    background: rgba(37, 99, 235, 0.18);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    border-radius: 20px;
     font-weight: 700;
-    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.badge-role-profissional {
+    background: rgba(220, 38, 38, 0.22);
+    color: #f87171;
+    border: 1px solid #ef4444;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.35);
+}
+
+/* Botões do Sistema - Vermelho Rubro com Estilo e Brilho */
+.btn-red, .btn-gold {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    color: #ffffff !important;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     padding: 10px 22px;
     border-radius: var(--radius-sm);
     border: none;
-    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
     transition: all 0.25s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    cursor: pointer;
 }
 
-.btn-gold:hover {
-    background: linear-gradient(135deg, #ecd18c 0%, var(--gold-light) 100%);
-    box-shadow: 0 6px 20px rgba(197, 160, 89, 0.45);
+.btn-red:hover, .btn-gold:hover {
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    box-shadow: 0 6px 22px rgba(220, 38, 38, 0.6);
     transform: translateY(-2px);
+    color: #ffffff !important;
 }
 
-.btn-outline-gold {
+.btn-outline-red, .btn-outline-gold {
     background: transparent;
-    color: var(--gold) !important;
-    border: 1px solid var(--gold);
+    color: var(--red-light) !important;
+    border: 1px solid var(--red-primary);
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
     font-weight: 600;
+    letter-spacing: 0.5px;
     padding: 9px 20px;
     border-radius: var(--radius-sm);
     transition: all 0.25s ease;
@@ -131,31 +221,34 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    cursor: pointer;
 }
 
-.btn-outline-gold:hover {
-    background: rgba(197, 160, 89, 0.12);
-    border-color: var(--gold-light);
-    color: var(--gold-light) !important;
+.btn-outline-red:hover, .btn-outline-gold:hover {
+    background: rgba(220, 38, 38, 0.16);
+    border-color: var(--red-light);
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.35);
     transform: translateY(-2px);
 }
 
-/* Cartões e Painéis */
+/* Cartões e Painéis Barbearia */
 .barber-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
     padding: 24px;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .barber-card:hover {
-    border-color: rgba(197, 160, 89, 0.4);
+    border-color: rgba(239, 68, 68, 0.55);
+    box-shadow: 0 14px 34px -5px rgba(0, 0, 0, 0.7), 0 0 20px rgba(220, 38, 38, 0.2);
 }
 
 .stat-card {
-    background: linear-gradient(145deg, #161922 0%, #111319 100%);
+    background: linear-gradient(145deg, #171a24 0%, #11131a 100%);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 22px;
@@ -168,27 +261,28 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     position: absolute;
     top: 0;
     right: 0;
-    width: 60px;
-    height: 60px;
-    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.25) 0%, transparent 70%);
 }
 
 .stat-icon {
     width: 52px;
     height: 52px;
     border-radius: 12px;
-    background: rgba(197, 160, 89, 0.12);
-    color: var(--gold);
+    background: rgba(220, 38, 38, 0.15);
+    color: var(--red-light);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 /* Formulários */
 .form-control, .form-select {
     background-color: var(--bg-input);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     color: #ffffff;
     border-radius: var(--radius-sm);
     padding: 12px 16px;
@@ -197,10 +291,10 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 }
 
 .form-control:focus, .form-select:focus {
-    background-color: #12151c;
-    border-color: var(--gold);
+    background-color: #12151d;
+    border-color: var(--red-light);
     color: #ffffff;
-    box-shadow: 0 0 0 0.25rem rgba(197, 160, 89, 0.2);
+    box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
 }
 
 .form-control::placeholder {
@@ -210,7 +304,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 .form-label {
     color: var(--text-secondary);
     font-size: 0.88rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 6px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -218,10 +312,10 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 
 /* Modais Customizados */
 .modal-content {
-    background-color: var(--bg-card);
+    background-color: var(--bg-modal);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85);
     color: var(--text-primary);
 }
 
@@ -239,7 +333,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 .badge-status {
     padding: 6px 12px;
     border-radius: 30px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -252,49 +346,82 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 }
 
 .badge-em_atendimento {
-    background: rgba(245, 158, 11, 0.15);
+    background: rgba(245, 158, 11, 0.2);
     color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .badge-concluido {
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(16, 185, 129, 0.2);
     color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 .badge-cancelado {
-    background: rgba(239, 68, 68, 0.15);
+    background: rgba(239, 68, 68, 0.2);
     color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 .badge-pago {
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(16, 185, 129, 0.25);
     color: #34d399;
     border: 1px solid #10b981;
 }
 
 .badge-pendente {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fbbf24;
-    border: 1px solid #f59e0b;
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid #ef4444;
 }
 
-/* Toast Container */
+/* Toast Container & Notificação de Erro (Alta Legibilidade) */
 .toast-container {
     position: fixed;
     top: 24px;
     right: 24px;
-    z-index: 1090;
+    z-index: 1095;
 }
 
 .barber-toast {
-    background: var(--bg-card);
+    background: #141720 !important;
     border: 1px solid var(--border-color);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.75);
     border-radius: var(--radius-md);
-    color: var(--text-primary);
+    color: #ffffff;
+    overflow: hidden;
+}
+
+/* Estilo Exclusivo de Toast de ERRO (Não fica em branco!) */
+.barber-toast-danger {
+    border: 2px solid #ef4444 !important;
+    background: linear-gradient(135deg, #1c090c 0%, #110507 100%) !important;
+    box-shadow: 0 10px 35px rgba(239, 68, 68, 0.35) !important;
+}
+
+.barber-toast-danger .toast-header {
+    background: #b91c1c !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #ef4444 !important;
+}
+
+.barber-toast-danger .toast-body {
+    color: #ffffff !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-left: 4px solid #ef4444 !important;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Toast de Sucesso */
+.barber-toast-success {
+    border: 2px solid #10b981 !important;
+    background: #0f1c16 !important;
+}
+
+.barber-toast-success .toast-header {
+    background: #047857 !important;
+    color: #ffffff !important;
 }
 
 /* Comprovante Digital */
@@ -305,9 +432,9 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     padding: 32px;
     max-width: 520px;
     margin: 0 auto;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.6);
     position: relative;
-    border: 2px dashed #d1d5db;
+    border: 2px dashed #b91c1c;
 }
 
 .receipt-header {
@@ -319,7 +446,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 
 .receipt-title {
     font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 800;
     color: #111827;
     letter-spacing: 1px;
@@ -337,10 +464,10 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     display: flex;
     justify-content: space-between;
     padding: 16px 0 8px 0;
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     font-weight: 800;
-    color: #0c0d10;
-    border-top: 2px solid #111827;
+    color: #991b1b;
+    border-top: 2px solid #b91c1c;
     margin-top: 10px;
 }
 
@@ -387,27 +514,33 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 .star-rating label:hover,
 .star-rating label:hover ~ label,
 .star-rating input:checked ~ label {
-    color: #fbbf24;
-    transform: scale(1.1);
+    color: #ef4444;
+    transform: scale(1.15);
 }
 
-/* Herói e Seções */
+/* Herói e Seções com Efeito Crimson Glow */
 .hero-section {
-    background: linear-gradient(180deg, rgba(12, 13, 16, 0.7) 0%, rgba(12, 13, 16, 0.98) 100%),
-                radial-gradient(ellipse at center, rgba(197, 160, 89, 0.15) 0%, transparent 70%);
+    background: linear-gradient(180deg, rgba(10, 11, 14, 0.75) 0%, rgba(10, 11, 14, 0.98) 100%),
+                radial-gradient(ellipse at center, rgba(220, 38, 38, 0.22) 0%, transparent 70%);
     padding: 80px 0 60px 0;
     text-align: center;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .hero-title {
-    font-size: 3.2rem;
+    font-size: 3.5rem;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.15;
     margin-bottom: 20px;
+    letter-spacing: 1px;
 }
 
 @media (max-width: 768px) {
     .hero-title {
-        font-size: 2.2rem;
+        font-size: 2.3rem;
+    }
+    .nav-search-wrap {
+        min-width: 100%;
+        margin-top: 10px;
     }
 }

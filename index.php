@@ -49,20 +49,20 @@ require_once __DIR__ . '/includes/header.php';
     <div class="container py-5">
         <div class="row align-items-center">
             <div class="col-lg-8 mx-auto text-center">
-                <span class="badge border border-warning text-gold px-3 py-2 rounded-pill mb-3 text-uppercase fw-semibold" style="letter-spacing: 2px;">
+                <span class="badge border border-danger text-danger px-3 py-2 rounded-pill mb-3 text-uppercase fw-semibold" style="letter-spacing: 2px;">
                     <i class="bi bi-award me-1"></i> A Melhor Experiência de Barbearia
                 </span>
                 <h1 class="hero-title text-white">
-                    PRECISÃO NA NAVALHA, <br><span class="text-gold">ESTILO QUE MARCA.</span>
+                    PRECISÃO NA NAVALHA, <br><span class="text-danger">ESTILO QUE MARCA.</span>
                 </h1>
                 <p class="lead text-secondary mb-4 mx-auto" style="max-width: 650px;">
                     <?= htmlspecialchars($empresa['slogan'] ?? 'Tradição clássica, navalha afiada e corte moderno. Reserve seu horário em segundos com confirmação imediata.') ?>
                 </p>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
-                    <a href="<?= BASE_URL ?>/cliente/agendar.php" class="btn btn-gold btn-lg px-4 py-3">
+                    <a href="<?= BASE_URL ?>/cliente/agendar.php" class="btn btn-red btn-lg px-4 py-3">
                         <i class="bi bi-calendar-check fs-5"></i> Agendar Atendimento
                     </a>
-                    <a href="#servicos" class="btn btn-outline-gold btn-lg px-4 py-3">
+                    <a href="#servicos" class="btn btn-outline-red btn-lg px-4 py-3">
                         <i class="bi bi-card-list fs-5"></i> Ver Tabela de Preços
                     </a>
                 </div>
@@ -106,7 +106,7 @@ require_once __DIR__ . '/includes/header.php';
 <section class="py-5" style="background: #111319;">
     <div class="container">
         <div class="text-center mb-5">
-            <span class="text-gold fw-bold text-uppercase" style="letter-spacing: 1px;">Acessos do Estabelecimento</span>
+            <span class="text-danger fw-bold text-uppercase" style="letter-spacing: 1px;">Acessos da Barbearia</span>
             <h2 class="text-white mt-1">Ambientes do Sistema</h2>
             <p class="text-secondary">Acesse o portal dedicado para o seu perfil</p>
         </div>
@@ -188,12 +188,12 @@ require_once __DIR__ . '/includes/header.php';
             <p class="text-secondary">Escolha o serviço ideal para o seu estilo</p>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4" id="gridServicosContainer">
             <?php foreach ($servicos as $servico): ?>
-                <div class="col-lg-4 col-md-6">
-                    <div class="barber-card h-100 d-flex flex-column justify-content-between p-4 position-relative">
+                <div class="col-lg-4 col-md-6 col-servico-item">
+                    <div class="barber-card card-servico-home h-100 d-flex flex-column justify-content-between p-4 position-relative">
                         <?php if ($servico['destaque']): ?>
-                            <span class="position-absolute top-0 end-0 bg-gold text-dark fw-bold px-3 py-1 rounded-bl small" style="border-top-right-radius: 12px; border-bottom-left-radius: 12px; font-size: 0.75rem;">
+                            <span class="position-absolute top-0 end-0 bg-danger text-white fw-bold px-3 py-1 rounded-bl small" style="border-top-right-radius: 12px; border-bottom-left-radius: 12px; font-size: 0.75rem;">
                                 MAIS PEDIDO
                             </span>
                         <?php endif; ?>

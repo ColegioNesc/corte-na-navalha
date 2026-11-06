@@ -73,10 +73,24 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
+    <!-- Barra de Pesquisa de Meus Agendamentos -->
+    <div class="mb-4">
+        <label for="filtroMeusAgendamentos" class="form-label small fw-bold text-uppercase d-flex align-items-center gap-1">
+            <i class="bi bi-search text-danger"></i> Pesquisar Meus Atendimentos:
+        </label>
+        <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-danger">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" id="filtroMeusAgendamentos" class="form-control" placeholder="Buscar por código (ex: CN-...), barbeiro ou procedimento (ex: degrade)..." oninput="filtrarMeusAgendamentos()">
+        </div>
+        <small class="text-muted" style="font-size: 0.75rem;">Filtra automaticamente tanto os próximos atendimentos quanto o histórico abaixo.</small>
+    </div>
+
     <!-- Próximos Atendimentos -->
     <div class="mb-5">
         <h4 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
-            <i class="bi bi-clock-history text-gold"></i> Próximos Atendimentos Confirmados
+            <i class="bi bi-clock-history text-danger"></i> Próximos Atendimentos Confirmados
         </h4>
 
         <?php if (empty($proximos)): ?>
@@ -134,13 +148,13 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
 
                             <div class="d-flex gap-2 pt-2 border-top border-secondary border-opacity-25">
-                                <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" class="btn btn-outline-gold btn-sm w-100">
-                                    <i class="bi bi-receipt me-1"></i> Ver Comprovante
+                                <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" class="btn btn-outline-danger btn-sm w-100">
+                                    <i class="bi bi-receipt me-1"></i> Comprovante
                                 </a>
-                                <?php if ($ag['status_pagamento'] === 'pendente' && $ag['metodo_pagamento'] === 'pix'): ?>
-                                    <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($ag['codigo_reserva']) ?>" class="btn btn-gold btn-sm w-100">
-                                        <i class="bi bi-qr-code me-1"></i> Pagar PIX
-                                    </a>
+                                <?php if ($ag['status_pagamento'] === 'pendente'): ?>
+                                    <button type="button" class="btn btn-red btn-sm w-100 fw-bold" onclick="abrirModalQrCode(<?= $ag['id'] ?>, '<?= htmlspecialchars(addslashes($usuario['nome'])) ?>', '<?= number_format($ag['valor_total'], 2, ',', '.') ?>', '<?= htmlspecialchars(addslashes($ag['procedimentos'])) ?>', '<?= $ag['codigo_reserva'] ?>')">
+                                        <i class="bi bi-qr-code me-1"></i> Pagar QR Code PIX
+                                    </button>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -212,9 +226,16 @@ require_once __DIR__ . '/../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end pe-4">
-                                    <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($h['codigo_reserva']) ?>" class="btn btn-sm btn-outline-gold">
-                                        <i class="bi bi-receipt"></i> Recibo
-                                    </a>
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <?php if ($h['status_pagamento'] === 'pendente'): ?>
+                                            <button type="button" class="btn btn-sm btn-red py-1 px-2" onclick="abrirModalQrCode(<?= $h['id'] ?>, '<?= htmlspecialchars(addslashes($usuario['nome'])) ?>', '<?= number_format($h['valor_total'], 2, ',', '.') ?>', '<?= htmlspecialchars(addslashes($h['procedimentos'])) ?>', '<?= $h['codigo_reserva'] ?>')" title="Pagar via PIX QR Code">
+                                                <i class="bi bi-qr-code me-1"></i> Pagar
+                                            </button>
+                                        <?php endif; ?>
+                                        <a href="<?= BASE_URL ?>/cliente/comprovante.php?codigo=<?= urlencode($h['codigo_reserva']) ?>" class="btn btn-sm btn-outline-secondary" title="Ver Recibo">
+                                            <i class="bi bi-receipt"></i> Recibo
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -276,11 +297,37 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const pagarId = params.get('pagar_id') || params.get('cobrar_id');
+    if (pagarId) {
+        abrirModalQrCode(pagarId);
+    }
+});
+
 function abrirModalAvaliacao(id, barbeiroNome) {
     document.getElementById('modalAvaliacaoAgendamentoId').value = id;
     document.getElementById('modalAvaliacaoBarbeiroNome').innerText = barbeiroNome;
     const modal = new bootstrap.Modal(document.getElementById('modalAvaliacao'));
     modal.show();
+}
+
+function filtrarMeusAgendamentos() {
+    const termo = (document.getElementById('filtroMeusAgendamentos').value || '').trim().toLowerCase();
+    
+    // Filtrar cards de próximos atendimentos
+    const cards = document.querySelectorAll('.col-lg-6 .barber-card');
+    cards.forEach(card => {
+        const txt = card.innerText.toLowerCase();
+        card.closest('.col-lg-6').style.display = txt.includes(termo) ? '' : 'none';
+    });
+
+    // Filtrar linhas da tabela de histórico
+    const rows = document.querySelectorAll('.table-hover tbody tr');
+    rows.forEach(tr => {
+        const txt = tr.innerText.toLowerCase();
+        tr.style.display = txt.includes(termo) ? '' : 'none';
+    });
 }
 </script>
 

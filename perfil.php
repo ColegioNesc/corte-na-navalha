@@ -1,241 +1,197 @@
 <?php
 /**
- * Página de Perfil e Preferências
+ * Meu Perfil & Segurança - Barbearia Corte na Navalha
+ * Identificação Clara: Cliente vs Profissional
  */
 
 require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
-if (!isLoggedIn()) {
-    header('Location: login.php');
-    exit;
-}
+exigirLogin(['cliente', 'barbeiro', 'recepcao', 'dono']);
 
-$user = getCurrentUser($pdo);
+$usuario = getUsuarioLogado();
+$pdo = getDBConnection();
 $mensagemSucesso = '';
 $mensagemErro = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'salvar_preferencias') {
-    $raio = (int)($_POST['raio_padrao'] ?? 300);
-    $tipo = in_array($_POST['tipo_alarme_padrao'] ?? '', ['som', 'vibracao', 'ambos']) ? $_POST['tipo_alarme_padrao'] : 'ambos';
-    $som = in_array($_POST['som_alarme'] ?? '', ['sirene', 'beep', 'toque']) ? $_POST['som_alarme'] : 'sirene';
+// Buscar dados completos do usuário
+$stmt = $pdo->prepare("SELECT * FROM usuarios WHERE id = :id LIMIT 1");
+$stmt->execute([':id' => $usuario['id']]);
+$dadosUsuario = $stmt->fetch();
+
+// Atualizar Perfil
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'atualizar_perfil') {
+    $telefone = trim($_POST['telefone'] ?? '');
+    $novaSenha = trim($_POST['nova_senha'] ?? '');
+    $chavePix = trim($_POST['chave_pix'] ?? '');
+    $tipoChavePix = trim($_POST['tipo_chave_pix'] ?? 'E-mail');
 
     try {
-        $stmt = $pdo->prepare("UPDATE usuarios SET raio_padrao = ?, tipo_alarme_padrao = ?, som_alarme = ? WHERE id = ?");
-        $stmt->execute([$raio, $tipo, $som, $_SESSION['user_id']]);
-        $_SESSION['raio_padrao'] = $raio;
-        $_SESSION['tipo_alarme_padrao'] = $tipo;
-        $_SESSION['som_alarme'] = $som;
-        $mensagemSucesso = 'Preferências salvas com sucesso!';
-        $user = getCurrentUser($pdo);
+        if (!empty($novaSenha)) {
+            if (strlen($novaSenha) < 6) {
+                throw new Exception('A nova senha deve ter no mínimo 6 caracteres.');
+            }
+            $hashSenha = password_hash($novaSenha, PASSWORD_DEFAULT);
+            $stmtUp = $pdo->prepare("UPDATE usuarios SET telefone = :telefone, chave_pix = :chave_pix, tipo_chave_pix = :tipo_chave_pix, senha = :senha WHERE id = :id");
+            $stmtUp->execute([
+                ':telefone'       => $telefone,
+                ':chave_pix'      => $chavePix,
+                ':tipo_chave_pix' => $tipoChavePix,
+                ':senha'          => $hashSenha,
+                ':id'             => $usuario['id']
+            ]);
+        } else {
+            $stmtUp = $pdo->prepare("UPDATE usuarios SET telefone = :telefone, chave_pix = :chave_pix, tipo_chave_pix = :tipo_chave_pix WHERE id = :id");
+            $stmtUp->execute([
+                ':telefone'       => $telefone,
+                ':chave_pix'      => $chavePix,
+                ':tipo_chave_pix' => $tipoChavePix,
+                ':id'             => $usuario['id']
+            ]);
+        }
+
+        $_SESSION['usuario_telefone'] = $telefone;
+        setMensagemToast('success', 'Perfil Atualizado!', 'Suas informações cadastrais foram salvas com sucesso.');
+        header('Location: ' . BASE_URL . '/perfil.php');
+        exit;
+
     } catch (Exception $e) {
-        $mensagemErro = 'Erro ao atualizar preferências.';
+        $mensagemErro = $e->getMessage();
     }
 }
 
-// Favoritos
-$stmtFav = $pdo->prepare("SELECT id, titulo, endereco, lat, lng, raio_preferido FROM destinos_favoritos WHERE usuario_id = ? ORDER BY titulo ASC");
-$stmtFav->execute([$_SESSION['user_id']]);
-$favoritos = $stmtFav->fetchAll();
-
-$pageTitle = "Meu Perfil - Alarme a Distância";
+$ehProfissional = isProfissional($dadosUsuario);
+$paginaTitulo = 'Meu Perfil | Corte na Navalha';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div class="row g-3">
-    <!-- Card de Dados e Preferências -->
-    <div class="col-md-6">
-        <div class="card card-app shadow-sm h-100">
-            <div class="card-header bg-white py-3">
-                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-person-gear me-2 text-primary"></i> Preferências Padrão</h5>
-            </div>
-            <div class="card-body">
-                <?php if ($mensagemSucesso): ?>
-                    <div class="alert alert-success py-2 small"><?= $mensagemSucesso ?></div>
-                <?php endif; ?>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Card Principal de Identificação -->
+            <div class="barber-card border-danger shadow-lg p-4 mb-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon" style="width: 65px; height: 65px; font-size: 2rem;">
+                            <i class="bi <?= $ehProfissional ? 'bi-scissors' : 'bi-person-fill' ?>"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white fw-bold mb-1"><?= htmlspecialchars($dadosUsuario['nome']) ?></h4>
+                            <p class="text-secondary small mb-0"><?= htmlspecialchars($dadosUsuario['email']) ?></p>
+                        </div>
+                    </div>
+
+                    <!-- Visualização e Compreensão de Perfil -->
+                    <div>
+                        <?php if ($ehProfissional): ?>
+                            <span class="badge badge-role-profissional p-2 fs-6">
+                                <i class="bi bi-shield-check me-1"></i> PROFISSIONAL • <?= strtoupper($dadosUsuario['perfil']) ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="badge badge-role-cliente p-2 fs-6">
+                                <i class="bi bi-person-fill me-1"></i> CONTA DE CLIENTE
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <?php if ($mensagemErro): ?>
-                    <div class="alert alert-danger py-2 small"><?= $mensagemErro ?></div>
+                    <div class="alert alert-danger py-2 mt-3 small fw-bold">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <?= htmlspecialchars($mensagemErro) ?>
+                    </div>
                 <?php endif; ?>
 
-                <div class="mb-3">
-                    <label class="form-label text-muted small mb-0">Nome do Usuário</label>
-                    <div class="fw-bold fs-6 text-dark"><?= escape($user['nome']) ?></div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-muted small mb-0">E-mail Cadastrado</label>
-                    <div class="fw-semibold text-secondary"><?= escape($user['email']) ?></div>
-                </div>
+                <form method="POST" class="mt-4">
+                    <input type="hidden" name="action" value="atualizar_perfil">
 
-                <form method="POST">
-                    <input type="hidden" name="action" value="salvar_preferencias">
-                    <div class="mb-3">
-                        <label for="raio_padrao" class="form-label fw-bold small">Raio Padrão de Aviso:</label>
-                        <select class="form-select" id="raio_padrao" name="raio_padrao">
-                            <option value="150" <?= $user['raio_padrao'] == 150 ? 'selected' : '' ?>>150 metros</option>
-                            <option value="200" <?= $user['raio_padrao'] == 200 ? 'selected' : '' ?>>200 metros</option>
-                            <option value="300" <?= $user['raio_padrao'] == 300 ? 'selected' : '' ?>>300 metros</option>
-                            <option value="500" <?= $user['raio_padrao'] == 500 ? 'selected' : '' ?>>500 metros</option>
-                            <option value="1000" <?= $user['raio_padrao'] == 1000 ? 'selected' : '' ?>>1 km</option>
-                        </select>
+                    <h5 class="text-white fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                        <i class="bi bi-person-badge text-danger me-2"></i>Informações Pessoais
+                    </h5>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Nome Completo</label>
+                            <input type="text" class="form-control text-secondary bg-dark" value="<?= htmlspecialchars($dadosUsuario['nome']) ?>" readonly>
+                            <small class="text-muted" style="font-size: 0.72rem;">Para alterar o nome, procure a administração.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">CPF Cadastrado</label>
+                            <input type="text" class="form-control text-secondary bg-dark" value="<?= htmlspecialchars($dadosUsuario['cpf']) ?>" readonly>
+                            <small class="text-muted" style="font-size: 0.72rem;">CPF vinculado aos recibos oficiais.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-control text-secondary bg-dark" value="<?= htmlspecialchars($dadosUsuario['email']) ?>" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="telefone" class="form-label">Telefone / WhatsApp</label>
+                            <input type="text" class="form-control mask-phone" id="telefone" name="telefone" value="<?= htmlspecialchars($dadosUsuario['telefone']) ?>" required>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="tipo_alarme_padrao" class="form-label fw-bold small">Tipo de Alarme Padrão:</label>
-                        <select class="form-select" id="tipo_alarme_padrao" name="tipo_alarme_padrao">
-                            <option value="ambos" <?= $user['tipo_alarme_padrao'] == 'ambos' ? 'selected' : '' ?>>🔔 Som + Vibração</option>
-                            <option value="som" <?= $user['tipo_alarme_padrao'] == 'som' ? 'selected' : '' ?>>🔊 Apenas Som</option>
-                            <option value="vibracao" <?= $user['tipo_alarme_padrao'] == 'vibracao' ? 'selected' : '' ?>>📳 Apenas Vibração</option>
-                        </select>
+                    <?php if ($ehProfissional): ?>
+                        <h5 class="text-white fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                            <i class="bi bi-qr-code text-danger me-2"></i>Dados Financeiros do Profissional (Repasses PIX)
+                        </h5>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="tipo_chave_pix" class="form-label">Tipo de Chave PIX</label>
+                                <select class="form-select" id="tipo_chave_pix" name="tipo_chave_pix">
+                                    <option value="E-mail" <?= (($dadosUsuario['tipo_chave_pix'] ?? '') === 'E-mail') ? 'selected' : '' ?>>E-mail</option>
+                                    <option value="CPF" <?= (($dadosUsuario['tipo_chave_pix'] ?? '') === 'CPF') ? 'selected' : '' ?>>CPF</option>
+                                    <option value="Telefone" <?= (($dadosUsuario['tipo_chave_pix'] ?? '') === 'Telefone') ? 'selected' : '' ?>>Telefone</option>
+                                    <option value="Aleatória" <?= (($dadosUsuario['tipo_chave_pix'] ?? '') === 'Aleatória') ? 'selected' : '' ?>>Chave Aleatória</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-8">
+                                <label for="chave_pix" class="form-label">Sua Chave PIX</label>
+                                <input type="text" class="form-control font-monospace" id="chave_pix" name="chave_pix" value="<?= htmlspecialchars($dadosUsuario['chave_pix'] ?? '') ?>" placeholder="Informe sua chave para receber comissões">
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <h5 class="text-white fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                        <i class="bi bi-shield-lock text-danger me-2"></i>Segurança & Senha de Acesso
+                    </h5>
+
+                    <div class="mb-4">
+                        <label for="nova_senha" class="form-label">Nova Senha (Opcional)</label>
+                        <input type="password" class="form-control" id="nova_senha" name="nova_senha" placeholder="Deixe em branco para manter a senha atual" minlength="6">
+                        <small class="text-muted" style="font-size: 0.72rem;">Mínimo 6 caracteres.</small>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="som_alarme" class="form-label fw-bold small">Som do Alarme:</label>
-                        <select class="form-select" id="som_alarme" name="som_alarme">
-                            <option value="sirene" <?= $user['som_alarme'] == 'sirene' ? 'selected' : '' ?>>🚨 Sirene de Alerta</option>
-                            <option value="beep" <?= $user['som_alarme'] == 'beep' ? 'selected' : '' ?>>⏱️ Bip Contínuo Rápido</option>
-                            <option value="toque" <?= $user['som_alarme'] == 'toque' ? 'selected' : '' ?>>🎵 Melodia Despertador</option>
-                        </select>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-red py-3 px-4 fw-bold">
+                            <i class="bi bi-check2-circle me-1"></i> Salvar Alterações
+                        </button>
+                        
+                        <?php if ($dadosUsuario['perfil'] === 'cliente'): ?>
+                            <a href="<?= BASE_URL ?>/cliente/dashboard.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar aos Agendamentos
+                            </a>
+                        <?php elseif ($dadosUsuario['perfil'] === 'barbeiro'): ?>
+                            <a href="<?= BASE_URL ?>/barbeiro/dashboard.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar ao Painel
+                            </a>
+                        <?php elseif ($dadosUsuario['perfil'] === 'recepcao'): ?>
+                            <a href="<?= BASE_URL ?>/recepcao/dashboard.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar à Recepção
+                            </a>
+                        <?php else: ?>
+                            <a href="<?= BASE_URL ?>/admin/dashboard.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar à Gestão
+                            </a>
+                        <?php endif; ?>
                     </div>
-
-                    <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold">
-                        <i class="bi bi-save me-1"></i> Salvar Preferências
-                    </button>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Card de Destinos Favoritos -->
-    <div class="col-md-6">
-        <div class="card card-app shadow-sm h-100">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-star-fill text-warning me-2"></i> Locais Salvos</h5>
-                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#modalAddFavorito">
-                    <i class="bi bi-plus-lg me-1"></i> Novo Local
-                </button>
-            </div>
-            <div class="card-body">
-                <?php if (empty($favoritos)): ?>
-                    <div class="text-center py-4 text-muted">
-                        <i class="bi bi-geo-alt fs-2"></i>
-                        <p class="small mt-2">Nenhum favorito cadastrado. Salve pontos como Casa ou Trabalho para selecionar com 1 clique.</p>
-                    </div>
-                <?php else: ?>
-                    <ul class="list-group list-group-flush">
-                        <?php foreach ($favoritos as $fav): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <div>
-                                    <div class="fw-bold text-dark"><i class="bi bi-pin-map text-danger me-1"></i> <?= escape($fav['titulo']) ?></div>
-                                    <small class="text-muted d-block text-truncate" style="max-width: 250px;"><?= escape($fav['endereco']) ?></small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removerFavorito(<?= $fav['id'] ?>)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
 </div>
-
-<!-- Modal Adicionar Favorito -->
-<div class="modal fade" id="modalAddFavorito" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow border-0" style="border-radius: 16px;">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Novo Local Favorito</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body py-2">
-                <div class="mb-3">
-                    <label for="favTitulo" class="form-label small fw-bold">Nome do Local (Ex: Casa, Trabalho):</label>
-                    <input type="text" class="form-control" id="favTitulo" placeholder="Ex: Casa">
-                </div>
-                <div class="mb-3">
-                    <label for="favEndereco" class="form-label small fw-bold">Endereço:</label>
-                    <input type="text" class="form-control" id="favEndereco" placeholder="Digite o endereço...">
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label for="favLat" class="form-label small fw-bold">Latitude:</label>
-                        <input type="number" step="any" class="form-control form-control-sm" id="favLat" placeholder="-23.5505">
-                    </div>
-                    <div class="col-6">
-                        <label for="favLng" class="form-label small fw-bold">Longitude:</label>
-                        <input type="number" step="any" class="form-control form-control-sm" id="favLng" placeholder="-46.6333">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary rounded-pill fw-bold" id="btnSalvarFavorito">Salvar Local</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const btnSalvar = document.getElementById('btnSalvarFavorito');
-    if (btnSalvar) {
-        btnSalvar.addEventListener('click', async () => {
-            const titulo = document.getElementById('favTitulo').value.trim();
-            const endereco = document.getElementById('favEndereco').value.trim();
-            const lat = parseFloat(document.getElementById('favLat').value);
-            const lng = parseFloat(document.getElementById('favLng').value);
-
-            if (!titulo || !endereco || isNaN(lat) || isNaN(lng)) {
-                UI.showToast('Preencha o título, endereço e coordenadas válidas.', 'warning');
-                return;
-            }
-
-            try {
-                const resp = await fetch('api/favoritos.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'adicionar', titulo, endereco, lat, lng })
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    UI.showToast('Local salvo com sucesso!', 'success');
-                    setTimeout(() => location.reload(), 800);
-                } else {
-                    UI.showToast(data.message, 'danger');
-                }
-            } catch (e) {
-                UI.showToast('Erro ao salvar local.', 'danger');
-            }
-        });
-    }
-});
-
-function removerFavorito(id) {
-    UI.confirmAction(
-        'Excluir Favorito',
-        'Tem certeza que deseja excluir este local favorito?',
-        async () => {
-            try {
-                const resp = await fetch('api/favoritos.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'excluir', id })
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    UI.showToast('Local removido.', 'info');
-                    setTimeout(() => location.reload(), 600);
-                } else {
-                    UI.showToast(data.message, 'danger');
-                }
-            } catch (e) {
-                UI.showToast('Erro ao excluir favorito.', 'danger');
-            }
-        }
-    );
-}
-</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

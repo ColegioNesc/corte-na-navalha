@@ -165,5 +165,47 @@ function gerarPixCopiaECola($chave, $nomeBeneficiario, $cidade, $valor, $identif
  * Retorna URL de imagem do QR Code para o código Copia e Cola
  */
 function gerarUrlQrCode($texto, $tamanho = 280) {
-    return "https://api.qrserver.com/v1/create-qr-code/?size={$tamanho}x{$tamanho}&data=" . urlencode($texto) . "&color=1e293b&bgcolor=ffffff";
+    if (empty($texto)) return '';
+    return "https://api.qrserver.com/v1/create-qr-code/?size={$tamanho}x{$tamanho}&data=" . urlencode($texto) . "&color=b91c1c&bgcolor=ffffff";
+}
+
+/**
+ * Garante e obtém o PIX Copia e Cola e QR Code de um agendamento
+ */
+function obterOuGerarPixAgendamento($agendamentoId, $pdo = null) {
+    if (!$pdo) $pdo = getDBConnection();
+    
+    $stmt = $pdo->prepare("SELECT * FROM agendamentos WHERE id = :id LIMIT 1");
+    $stmt->execute([':id' => $agendamentoId]);
+    $ag = $stmt->fetch();
+    
+    if (!$ag) return null;
+    
+    $pixCopiaCola = $ag['pix_copia_cola'];
+    if (empty($pixCopiaCola)) {
+        $empresa = getEmpresaConfig();
+        $chavePix = $empresa['chave_pix_principal'] ?? 'pix@cortenanavalha.com.br';
+        $pixTxId = 'CN' . $ag['id'] . time();
+        $pixCopiaCola = gerarPixCopiaECola(
+            $chavePix,
+            $empresa['nome_barbearia'] ?? 'Corte na Navalha Barbearia',
+            'SAO PAULO',
+            (float)$ag['valor_total'],
+            $pixTxId
+        );
+        
+        $up = $pdo->prepare("UPDATE agendamentos SET pix_copia_cola = :copia, pix_txid = :txid, metodo_pagamento = 'pix' WHERE id = :id");
+        $up->execute([':copia' => $pixCopiaCola, ':txid' => $pixTxId, ':id' => $ag['id']]);
+        $ag['pix_copia_cola'] = $pixCopiaCola;
+    }
+    
+    return [
+        'id'               => $ag['id'],
+        'codigo_reserva'   => $ag['codigo_reserva'],
+        'valor_total'      => (float)$ag['valor_total'],
+        'status_pagamento' => $ag['status_pagamento'],
+        'status_atendimento' => $ag['status_atendimento'],
+        'pix_copia_cola'   => $pixCopiaCola,
+        'qr_code_url'      => gerarUrlQrCode($pixCopiaCola, 260)
+    ];
 }

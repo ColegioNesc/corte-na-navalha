@@ -40,12 +40,10 @@ try {
     $usuario = $stmt->fetch();
 
     if ($usuario && password_verify($senha, $usuario['senha'])) {
-        // Se foi especificado perfil no formulário e for diferente (a menos que seja dono testando outro perfil)
-        if (!empty($perfilDesejado) && $usuario['perfil'] !== $perfilDesejado && $usuario['perfil'] !== 'dono') {
-            setMensagemToast('danger', 'Perfil Incorreto', "Esta conta não possui permissão para o perfil de " . ucfirst($perfilDesejado) . ".");
-            header('Location: ' . BASE_URL . '/login.php?perfil=' . urlencode($perfilDesejado));
-            exit;
-        }
+        $perfilReal = $usuario['perfil'];
+        $isProf = in_array($perfilReal, ['barbeiro', 'recepcao', 'dono']);
+        $tipoUsuario = $isProf ? 'profissional' : 'cliente';
+        $tipoFormatado = getTipoUsuarioFormatado($perfilReal);
 
         // Salvar dados na sessão nativa
         $_SESSION['usuario_id']       = $usuario['id'];
@@ -53,12 +51,17 @@ try {
         $_SESSION['usuario_email']    = $usuario['email'];
         $_SESSION['usuario_cpf']      = $usuario['cpf'];
         $_SESSION['usuario_telefone'] = $usuario['telefone'];
-        $_SESSION['usuario_perfil']   = $usuario['perfil'];
+        $_SESSION['usuario_perfil']   = $perfilReal;
+        $_SESSION['usuario_tipo']     = $tipoUsuario;
 
-        setMensagemToast('success', 'Bem-vindo(a)!', 'Olá, ' . htmlspecialchars($usuario['nome']) . '! Login efetuado com sucesso.');
+        $msgBoasVindas = $isProf 
+            ? "Olá, " . htmlspecialchars($usuario['nome']) . "! Acesso operacional liberado como {$tipoFormatado}."
+            : "Olá, " . htmlspecialchars($usuario['nome']) . "! Bem-vindo(a) à Barbearia Corte na Navalha.";
 
-        // Redireciona para o portal correto
-        redirecionarPorPerfil($usuario['perfil']);
+        setMensagemToast('success', 'Acesso Concluído!', $msgBoasVindas);
+
+        // Redireciona para o portal correto de acordo com a compreensão do perfil
+        redirecionarPorPerfil($perfilReal);
     } else {
         setMensagemToast('danger', 'Acesso Recusado', 'E-mail/CPF ou senha inválidos. Tente novamente.');
         header('Location: ' . BASE_URL . '/login.php' . ($perfilDesejado ? '?perfil=' . urlencode($perfilDesejado) : ''));

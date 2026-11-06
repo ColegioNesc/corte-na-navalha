@@ -35,7 +35,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <form action="<?= BASE_URL ?>/actions/barbearia_salvar.php" method="POST">
                     
                     <h5 class="text-white fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">
-                        <i class="bi bi-shop text-gold me-2"></i>Identidade do Estabelecimento
+                        <i class="bi bi-shop text-danger me-2"></i>Identidade da Barbearia
                     </h5>
 
                     <div class="row g-3 mb-4">
