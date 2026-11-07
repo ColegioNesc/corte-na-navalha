@@ -317,7 +317,7 @@ if (file_exists($configDir . '/db_credentials.php')) {
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <label class="form-label small text-secondary mb-1">Nome Completo do Dono <span class="text-danger">*</span></label>
-                                    <input type="text" id="dono_nome" class="form-control form-control-sm" placeholder="Ex: Rafael Nishimura">
+                                    <input type="text" id="dono_nome" class="form-control form-control-sm" placeholder="Ex: Fabio Silva">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small text-secondary mb-1">E-mail de Login <span class="text-danger">*</span></label>

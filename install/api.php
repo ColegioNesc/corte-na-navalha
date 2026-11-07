@@ -359,23 +359,31 @@ if ($acao === 'executar_instalacao') {
             $logs[] = "Identificação inicial da barbearia e chave PIX configuradas.";
         }
 
-        // 5. Se Modo Produção estiver ativo, registra obrigatoriamente a conta oficial do Proprietário (Dono)
+        // 5. Se Modo Produção estiver ativo:
+        //    Remove todos os funcionários/clientes/agendamentos fictícios de demonstração
+        //    e mantém na base APENAS o usuário Proprietário (Dono) cadastrado pelo aluno.
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+        $_SESSION = [];
+
         if ($modoProducao) {
+            $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+            $pdo->exec("TRUNCATE TABLE `avaliacoes`");
+            $pdo->exec("TRUNCATE TABLE `agendamento_itens`");
+            $pdo->exec("TRUNCATE TABLE `transacoes`");
+            $pdo->exec("TRUNCATE TABLE `pagamentos_funcionarios`");
+            $pdo->exec("TRUNCATE TABLE `agendamentos`");
+            $pdo->exec("TRUNCATE TABLE `barbeiro_servicos`");
+            $pdo->exec("TRUNCATE TABLE `usuarios`");
+            $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
             $senhaHashDono = password_hash($donoSenha, PASSWORD_DEFAULT);
             $pixDono = $chavePix !== '' ? $chavePix : $donoEmail;
 
             $stmtDono = $pdo->prepare("
-                INSERT INTO `usuarios` (`id`, `nome`, `email`, `cpf`, `telefone`, `senha`, `perfil`, `especialidade`, `chave_pix`, `tipo_chave_pix`, `comissao_percentual`, `ativo`)
-                VALUES (1, :nome, :email, :cpf, :telefone, :senha, 'dono', 'Proprietário & Gestor', :pix, 'E-mail', 100.00, 1)
-                ON DUPLICATE KEY UPDATE
-                    `nome` = VALUES(`nome`),
-                    `email` = VALUES(`email`),
-                    `cpf` = VALUES(`cpf`),
-                    `telefone` = VALUES(`telefone`),
-                    `senha` = VALUES(`senha`),
-                    `perfil` = 'dono',
-                    `chave_pix` = VALUES(`chave_pix`),
-                    `ativo` = 1
+                INSERT INTO `usuarios` (`id`, `nome`, `email`, `cpf`, `telefone`, `senha`, `perfil`, `especialidade`, `chave_pix`, `tipo_chave_pix`, `comissao_percentual`, `permite_catalogo_proprio`, `ativo`)
+                VALUES (1, :nome, :email, :cpf, :telefone, :senha, 'dono', 'Proprietário & Gestor', :pix, 'E-mail', 100.00, 1, 1)
             ");
             $stmtDono->execute([
                 ':nome'     => $donoNome,
@@ -385,7 +393,8 @@ if ($acao === 'executar_instalacao') {
                 ':senha'    => $senhaHashDono,
                 ':pix'      => $pixDono
             ]);
-            $logs[] = "Conta oficial do Proprietário ({$donoEmail}) cadastrada para Produção.";
+
+            $logs[] = "Usuários fictícios removidos. Base iniciada exclusivamente com o Proprietário ({$donoEmail}).";
         }
 
         // 5. Gravar arquivo config/db_credentials.php

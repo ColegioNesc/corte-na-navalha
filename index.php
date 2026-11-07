@@ -153,6 +153,7 @@ require_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- Equipe de Barbeiros -->
+<?php if (!empty($barbeiros)): ?>
 <section class="py-5" style="background: #111319;">
     <div class="container py-4">
         <div class="text-center mb-5">
@@ -194,6 +195,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- Avaliações dos Clientes -->
 <?php if (!empty($avaliacoes)): ?>
