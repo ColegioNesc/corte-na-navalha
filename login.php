@@ -13,18 +13,6 @@ if (usuarioLogado()) {
     redirecionarPorPerfil($usuario['perfil']);
 }
 
-$perfilSelecionado = $_GET['perfil'] ?? 'cliente';
-if (!in_array($perfilSelecionado, ['cliente', 'barbeiro', 'recepcao', 'dono'])) {
-    $perfilSelecionado = 'cliente';
-}
-
-$perfisNomes = [
-    'cliente'  => 'Área do Cliente',
-    'barbeiro' => 'Portal do Barbeiro',
-    'recepcao' => 'Acesso da Recepção',
-    'dono'     => 'Gestão da Barbearia'
-];
-
 $paginaTitulo = 'Entrar | Barbearia Corte na Navalha';
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -47,36 +35,8 @@ require_once __DIR__ . '/includes/header.php';
                     <p class="text-secondary small mb-0">Identifique-se para gerenciar seus horários ou atendimentos</p>
                 </div>
 
-                <!-- Seletor de Categoria: Cliente vs Profissional -->
-                <div class="mb-4">
-                    <label class="form-label small text-secondary fw-bold text-uppercase d-block text-center mb-2">
-                        Selecione seu Perfil de Acesso:
-                    </label>
-                    <div class="btn-group w-100 p-1 rounded" style="background: #090a0d; border: 1px solid rgba(220, 38, 38, 0.3);">
-                        <a href="?perfil=cliente" class="btn btn-sm <?= ($perfilSelecionado === 'cliente') ? 'btn-red fw-bold shadow-sm' : 'btn-outline-dark text-secondary border-0' ?>">
-                            <i class="bi bi-person-fill me-1"></i> Cliente
-                        </a>
-                        <a href="?perfil=barbeiro" class="btn btn-sm <?= ($perfilSelecionado === 'barbeiro') ? 'btn-red fw-bold shadow-sm' : 'btn-outline-dark text-secondary border-0' ?>">
-                            <i class="bi bi-scissors me-1"></i> Barbeiro
-                        </a>
-                        <a href="?perfil=recepcao" class="btn btn-sm <?= ($perfilSelecionado === 'recepcao') ? 'btn-red fw-bold shadow-sm' : 'btn-outline-dark text-secondary border-0' ?>">
-                            <i class="bi bi-receipt me-1"></i> Recepção
-                        </a>
-                        <a href="?perfil=dono" class="btn btn-sm <?= ($perfilSelecionado === 'dono') ? 'btn-red fw-bold shadow-sm' : 'btn-outline-dark text-secondary border-0' ?>">
-                            <i class="bi bi-shield-lock me-1"></i> Gestão
-                        </a>
-                    </div>
-                    <div class="text-center mt-2">
-                        <small class="text-danger" style="font-size: 0.72rem;">
-                            <i class="bi bi-info-circle me-1"></i> O sistema reconhece automaticamente sua conta como <strong>Cliente</strong> ou <strong>Profissional</strong>.
-                        </small>
-                    </div>
-                </div>
-
                 <!-- Formulário de Login Seguro -->
                 <form action="<?= BASE_URL ?>/actions/auth_login.php" method="POST">
-                    <input type="hidden" name="perfil" id="inputPerfil" value="<?= htmlspecialchars($perfilSelecionado) ?>">
-
                     <div class="mb-3">
                         <label for="login" class="form-label">E-mail ou CPF</label>
                         <div class="input-group">
@@ -107,14 +67,12 @@ require_once __DIR__ . '/includes/header.php';
                     </button>
                 </form>
 
-                <?php if ($perfilSelecionado === 'cliente'): ?>
-                    <div class="text-center pt-3 border-top border-secondary border-opacity-25">
-                        <p class="text-secondary small mb-2">Primeira vez na Corte na Navalha?</p>
-                        <a href="<?= BASE_URL ?>/cadastro.php" class="btn btn-outline-red btn-sm w-100 py-2">
-                            <i class="bi bi-person-plus me-1"></i> Criar Nova Conta de Cliente
-                        </a>
-                    </div>
-                <?php endif; ?>
+                <div class="text-center pt-3 border-top border-secondary border-opacity-25">
+                    <p class="text-secondary small mb-2">Primeira vez na Corte na Navalha?</p>
+                    <a href="<?= BASE_URL ?>/cadastro.php" class="btn btn-outline-red btn-sm w-100 py-2">
+                        <i class="bi bi-person-plus me-1"></i> Criar Nova Conta de Cliente
+                    </a>
+                </div>
 
                 <?php if (!acabouOTeste()): ?>
                 <!-- Atalhos de Acesso Rápido para Teste (Ocultados automaticamente quando ACABOUOTESTE for ativado) -->
@@ -170,8 +128,9 @@ function toggleSenha(inputId, btn) {
 function preencherLogin(email, senha, perfil) {
     document.getElementById('login').value = email;
     document.getElementById('senha').value = senha;
-    document.getElementById('inputPerfil').value = perfil;
-    showToast('info', 'Dados Preenchidos', 'Perfil de teste selecionado: ' + perfil.toUpperCase());
+    const inputPerfil = document.getElementById('inputPerfil');
+    if (inputPerfil) inputPerfil.value = perfil;
+    showToast('info', 'Demonstração', 'Acesso rápido selecionado: ' + perfil.toUpperCase());
 }
 </script>
 

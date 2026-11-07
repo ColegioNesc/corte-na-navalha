@@ -39,16 +39,27 @@
                 </ul>
             </div>
 
-            <!-- Coluna 3: Portais de Acesso -->
+            <!-- Coluna 3: Acesso ao Sistema -->
             <div class="col-lg-4 col-md-12">
                 <h6 class="text-white text-uppercase fw-bold mb-3" style="letter-spacing: 1px;">
-                    <i class="bi bi-shield-lock text-danger me-1"></i> Acessos da Barbearia
+                    <i class="bi bi-shield-lock text-danger me-1"></i> Acesso ao Sistema
                 </h6>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="<?= BASE_URL ?>/login.php?perfil=cliente" class="btn btn-sm btn-outline-red">Área do Cliente</a>
-                    <a href="<?= BASE_URL ?>/login.php?perfil=barbeiro" class="btn btn-sm btn-outline-red">Portal do Barbeiro</a>
-                    <a href="<?= BASE_URL ?>/login.php?perfil=recepcao" class="btn btn-sm btn-outline-red">Recepção</a>
-                    <a href="<?= BASE_URL ?>/login.php?perfil=dono" class="btn btn-sm btn-outline-red">Gestão da Barbearia</a>
+                    <?php if (usuarioLogado()): ?>
+                        <a href="<?= getHomeUrl() ?>" class="btn btn-sm btn-gold">
+                            <i class="bi bi-speedometer2 me-1"></i> Meu Painel
+                        </a>
+                        <a href="<?= BASE_URL ?>/perfil.php" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-person me-1"></i> Perfil
+                        </a>
+                    <?php else: ?>
+                        <a href="<?= BASE_URL ?>/login.php" class="btn btn-sm btn-outline-red">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+                        </a>
+                        <a href="<?= BASE_URL ?>/cadastro.php" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-person-plus me-1"></i> Criar Conta
+                        </a>
+                    <?php endif; ?>
                 </div>
                 <div class="mt-3">
                     <span class="badge bg-dark border border-danger border-opacity-50 text-light p-2">
