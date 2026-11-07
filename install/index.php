@@ -295,10 +295,49 @@ if (file_exists($configDir . '/db_credentials.php')) {
                             </div>
                             <div class="col-12 mt-2">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="modo_producao">
-                                    <label class="form-check-label small text-secondary" for="modo_producao">
-                                        Ativar modo produção (ocultar os botões de preenchimento rápido de demonstração na tela de login)
+                                    <input class="form-check-input" type="checkbox" id="modo_producao" onchange="alternarModoProducao(this.checked)">
+                                    <label class="form-check-label small text-white fw-semibold" for="modo_producao">
+                                        Ativar Modo Produção (Ocultar atalhos de teste e cadastrar o Proprietário oficial)
                                     </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloco Obrigatório de Cadastro do Proprietário quando Modo Produção estiver ativo -->
+                        <div id="blocoCadastroDonoProducao" class="mt-3 pt-3 border-top border-danger border-opacity-50 d-none">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="small fw-bold text-warning text-uppercase">
+                                    <i class="bi bi-person-badge-fill me-1"></i> Cadastro Obrigatório do Proprietário (Dono)
+                                </span>
+                                <span class="badge bg-danger">Obrigatório em Produção</span>
+                            </div>
+                            <p class="text-secondary mb-3" style="font-size: 0.76rem;">
+                                Como o Modo Produção foi ativado, defina agora os dados reais de acesso do administrador principal da barbearia:
+                            </p>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">Nome Completo do Dono <span class="text-danger">*</span></label>
+                                    <input type="text" id="dono_nome" class="form-control form-control-sm" placeholder="Ex: Rafael Nishimura">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">E-mail de Login <span class="text-danger">*</span></label>
+                                    <input type="email" id="dono_email" class="form-control form-control-sm" placeholder="Ex: admin@suabarbearia.com.br">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">CPF do Proprietário <span class="text-danger">*</span></label>
+                                    <input type="text" id="dono_cpf" class="form-control form-control-sm" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCpf(this)">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">Telefone / WhatsApp <span class="text-danger">*</span></label>
+                                    <input type="text" id="dono_telefone" class="form-control form-control-sm" placeholder="(11) 99999-9999" maxlength="15" oninput="mascaraTelefone(this)">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">Senha de Acesso (mín. 6 dígitos) <span class="text-danger">*</span></label>
+                                    <input type="password" id="dono_senha" class="form-control form-control-sm" placeholder="••••••••">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">Confirmar Senha <span class="text-danger">*</span></label>
+                                    <input type="password" id="dono_senha_confirma" class="form-control form-control-sm" placeholder="••••••••">
                                 </div>
                             </div>
                         </div>
@@ -369,17 +408,19 @@ if (file_exists($configDir . '/db_credentials.php')) {
 
                     <!-- Tabela de Contas Criadas -->
                     <div class="p-3 rounded mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);">
-                        <h6 class="text-danger fw-bold small text-uppercase mb-2"><i class="bi bi-key-fill me-1"></i> Credenciais Iniciais (Senha padrão: <code>123456</code>)</h6>
+                        <h6 class="text-danger fw-bold small text-uppercase mb-2" id="tituloCredenciaisFinais">
+                            <i class="bi bi-key-fill me-1"></i> Credenciais Iniciais (Senha padrão: <code>123456</code>)
+                        </h6>
                         <div class="table-responsive">
                             <table class="table table-dark table-sm table-borderless small mb-0">
                                 <thead>
                                     <tr class="text-secondary border-bottom border-secondary border-opacity-25">
                                         <th>Perfil</th>
-                                        <th>E-mail de Login</th>
+                                        <th>E-mail / CPF de Login</th>
                                         <th>Painel</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="corpoTabelaCredenciais">
                                     <tr>
                                         <td><span class="badge bg-danger">Dono / Admin</span></td>
                                         <td class="font-monospace">dono@cortenanavalha.com.br</td>
@@ -427,10 +468,101 @@ if (file_exists($configDir . '/db_credentials.php')) {
 <script>
 let conexaoValidada = false;
 
+function alternarModoProducao(ativo) {
+    const bloco = document.getElementById('blocoCadastroDonoProducao');
+    if (ativo) {
+        bloco.classList.remove('d-none');
+    } else {
+        bloco.classList.add('d-none');
+    }
+}
+
+function mascaraCpf(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9) {
+        v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    } else if (v.length > 6) {
+        v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    } else if (v.length > 3) {
+        v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    }
+    input.value = v;
+}
+
+function mascaraTelefone(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 10) {
+        v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (v.length > 6) {
+        v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else if (v.length > 2) {
+        v = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+    }
+    input.value = v;
+}
+
+function validarCadastroDonoProducao() {
+    const modoProducao = document.getElementById('modo_producao').checked;
+    if (!modoProducao) return { ok: true };
+
+    const nome = document.getElementById('dono_nome').value.trim();
+    const email = document.getElementById('dono_email').value.trim();
+    const cpf = document.getElementById('dono_cpf').value.trim();
+    const tel = document.getElementById('dono_telefone').value.trim();
+    const senha = document.getElementById('dono_senha').value;
+    const confirma = document.getElementById('dono_senha_confirma').value;
+
+    if (!nome || !email || !cpf || !tel || !senha || !confirma) {
+        return {
+            ok: false,
+            msg: 'Com o Modo Produção ativo, é obrigatório preencher todos os dados de cadastro do Proprietário (Nome, E-mail, CPF, Telefone e Senha).'
+        };
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+        return {
+            ok: false,
+            msg: 'Informe um endereço de e-mail válido para o Proprietário.'
+        };
+    }
+
+    if (cpf.replace(/\D/g, '').length !== 11) {
+        return {
+            ok: false,
+            msg: 'O CPF do Proprietário deve conter os 11 dígitos.'
+        };
+    }
+
+    if (senha.length < 6) {
+        return {
+            ok: false,
+            msg: 'A senha do Proprietário deve ter pelo menos 6 caracteres.'
+        };
+    }
+
+    if (senha !== confirma) {
+        return {
+            ok: false,
+            msg: 'A confirmação de senha do Proprietário não confere com a senha digitada.'
+        };
+    }
+
+    return { ok: true };
+}
+
 function irParaPasso(numero) {
-    if (numero === 3 && !conexaoValidada) {
-        alert('Por favor, teste e valide a conexão com o banco de dados antes de avançar.');
-        return;
+    if (numero === 3) {
+        if (!conexaoValidada) {
+            alert('Por favor, clique em "1º Testar Conexão" e valide o banco de dados antes de avançar.');
+            return;
+        }
+        const validacaoDono = validarCadastroDonoProducao();
+        if (!validacaoDono.ok) {
+            const box = document.getElementById('boxResultadoTeste');
+            box.className = 'alert alert-warning bg-warning bg-opacity-10 border-warning text-warning small py-2 mb-3';
+            box.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> ${validacaoDono.msg}`;
+            return;
+        }
     }
 
     document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
@@ -455,8 +587,11 @@ function irParaPasso(numero) {
         const port = document.getElementById('db_port').value.trim();
         const name = document.getElementById('db_name').value.trim();
         const user = document.getElementById('db_user').value.trim();
+        const modoProd = document.getElementById('modo_producao').checked;
+        const donoEmail = document.getElementById('dono_email').value.trim();
+        const infoExtra = modoProd ? ` | Modo Produção (Dono: ${donoEmail})` : ' | Modo Demonstração';
         document.getElementById('resumoConexaoTexto').innerText =
-            `Servidor: ${host}:${port} | Database: ${name} | Usuário: ${user}`;
+            `Servidor: ${host}:${port} | Database: ${name} | Usuário: ${user}${infoExtra}`;
     }
 }
 
@@ -514,6 +649,12 @@ async function testarConexaoBanco() {
 }
 
 async function executarMigracaoCompleta() {
+    const validacaoDono = validarCadastroDonoProducao();
+    if (!validacaoDono.ok) {
+        irParaPasso(2);
+        return;
+    }
+
     const btn = document.getElementById('btnExecutarMigracao');
     const btnVoltar = document.getElementById('btnVoltarStep2');
     const logContainer = document.getElementById('logMigracaoContainer');
@@ -527,6 +668,7 @@ async function executarMigracaoCompleta() {
     logContainer.classList.remove('d-none');
     listaLogs.innerHTML = '<div class="text-secondary"><i class="bi bi-hourglass-split me-1"></i> Iniciando criação das tabelas e configuração do host...</div>';
 
+    const modoProducaoAtivo = document.getElementById('modo_producao').checked;
     const payload = {
         acao: 'executar_instalacao',
         db_host: document.getElementById('db_host').value.trim(),
@@ -536,7 +678,12 @@ async function executarMigracaoCompleta() {
         db_pass: document.getElementById('db_pass').value,
         nome_barbearia: document.getElementById('nome_barbearia').value.trim(),
         chave_pix: document.getElementById('chave_pix').value.trim(),
-        modo_producao: document.getElementById('modo_producao').checked
+        modo_producao: modoProducaoAtivo,
+        dono_nome: document.getElementById('dono_nome').value.trim(),
+        dono_email: document.getElementById('dono_email').value.trim(),
+        dono_cpf: document.getElementById('dono_cpf').value.trim(),
+        dono_telefone: document.getElementById('dono_telefone').value.trim(),
+        dono_senha: document.getElementById('dono_senha').value
     };
 
     try {
@@ -558,6 +705,17 @@ async function executarMigracaoCompleta() {
         }
 
         if (res.success) {
+            if (modoProducaoAtivo) {
+                document.getElementById('tituloCredenciaisFinais').innerHTML =
+                    '<i class="bi bi-shield-check me-1"></i> Conta Oficial do Proprietário Configurada (Modo Produção)';
+                document.getElementById('corpoTabelaCredenciais').innerHTML = `
+                    <tr>
+                        <td><span class="badge bg-danger">Proprietário (Dono)</span></td>
+                        <td class="font-monospace">${payload.dono_email} <span class="text-secondary">(${payload.dono_cpf})</span></td>
+                        <td>Gestão Completa (Senha definida por você)</td>
+                    </tr>
+                `;
+            }
             setTimeout(() => {
                 irParaPasso(4);
             }, 900);

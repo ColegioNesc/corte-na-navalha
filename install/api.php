@@ -297,6 +297,30 @@ if ($acao === 'executar_instalacao') {
     $nomeBarbearia = trim($data['nome_barbearia'] ?? '');
     $chavePix      = trim($data['chave_pix'] ?? '');
 
+    // Dados obrigatórios do Proprietário (Dono) caso Modo Produção esteja ativo
+    $donoNome     = trim($data['dono_nome'] ?? '');
+    $donoEmail    = trim($data['dono_email'] ?? '');
+    $donoCpf      = trim($data['dono_cpf'] ?? '');
+    $donoTelefone = trim($data['dono_telefone'] ?? '');
+    $donoSenha    = (string)($data['dono_senha'] ?? '');
+
+    if ($modoProducao) {
+        if ($donoNome === '' || $donoEmail === '' || $donoCpf === '' || $donoTelefone === '' || $donoSenha === '') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Como o Modo Produção está ativo, é obrigatório preencher todos os dados de cadastro do Proprietário (Nome, E-mail, CPF, Telefone e Senha).'
+            ]);
+            exit;
+        }
+        if (strlen($donoSenha) < 6) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'A senha do Proprietário deve possuir no mínimo 6 caracteres.'
+            ]);
+            exit;
+        }
+    }
+
     $logs = [];
 
     try {
@@ -333,6 +357,35 @@ if ($acao === 'executar_instalacao') {
                 ':pix'  => $chavePix
             ]);
             $logs[] = "Identificação inicial da barbearia e chave PIX configuradas.";
+        }
+
+        // 5. Se Modo Produção estiver ativo, registra obrigatoriamente a conta oficial do Proprietário (Dono)
+        if ($modoProducao) {
+            $senhaHashDono = password_hash($donoSenha, PASSWORD_DEFAULT);
+            $pixDono = $chavePix !== '' ? $chavePix : $donoEmail;
+
+            $stmtDono = $pdo->prepare("
+                INSERT INTO `usuarios` (`id`, `nome`, `email`, `cpf`, `telefone`, `senha`, `perfil`, `especialidade`, `chave_pix`, `tipo_chave_pix`, `comissao_percentual`, `ativo`)
+                VALUES (1, :nome, :email, :cpf, :telefone, :senha, 'dono', 'Proprietário & Gestor', :pix, 'E-mail', 100.00, 1)
+                ON DUPLICATE KEY UPDATE
+                    `nome` = VALUES(`nome`),
+                    `email` = VALUES(`email`),
+                    `cpf` = VALUES(`cpf`),
+                    `telefone` = VALUES(`telefone`),
+                    `senha` = VALUES(`senha`),
+                    `perfil` = 'dono',
+                    `chave_pix` = VALUES(`chave_pix`),
+                    `ativo` = 1
+            ");
+            $stmtDono->execute([
+                ':nome'     => $donoNome,
+                ':email'    => $donoEmail,
+                ':cpf'      => $donoCpf,
+                ':telefone' => $donoTelefone,
+                ':senha'    => $senhaHashDono,
+                ':pix'      => $pixDono
+            ]);
+            $logs[] = "Conta oficial do Proprietário ({$donoEmail}) cadastrada para Produção.";
         }
 
         // 5. Gravar arquivo config/db_credentials.php
