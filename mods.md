@@ -1,7 +1,7 @@
 # Regras
-Ainda sim seguindo os requisitos.md para construção e correção, vamos elencar todos os tópicos encontrados que devem ter correções.
-o plano de implementação deve ser criado como implamentation_plan.md e detalhar cada passo que deve ser tomado de forma logica  para que não tenhamos que ficar refazendo modulos.
-o plano de implementação deve ser criado pensando no plano free do antigravity pois cada passo que vamos implementar não pode extrapolar os tokens de IA.
+- Ainda sim seguindo os requisitos.md para construção e correção, vamos elencar todos os tópicos encontrados que devem ter correções.
+- o plano de implementação deve ser criado como implamentation_plan.md e detalhar cada passo que deve ser tomado de forma logica  para que não tenhamos que ficar refazendo modulos.
+- o plano de implementação deve ser criado pensando no plano free do antigravity pois cada passo que vamos implementar não pode extrapolar os tokens de IA.
 # Objetivos
 - deixar os usuários teste como estão, vamos usar a palavra chave "ACABOUOTESTE" para quando for colocado em produção for removido os atalhos de login de teste e deixar o mais limpo possível para a por em produção.
 - todos os usuários criados no sistema devem sempre ser usuários comum.
