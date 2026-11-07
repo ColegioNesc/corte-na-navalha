@@ -10,9 +10,9 @@ $perfilAtual = $usuario['perfil'] ?? null;
 $ehProfissional = isProfissional($usuario);
 ?>
 <nav class="navbar navbar-expand-lg navbar-barber sticky-top">
-    <div class="container">
+    <div class="container d-flex align-items-center justify-content-between flex-nowrap">
         <!-- Logotipo Oficial da Barbearia: Se logado, vai sempre para o Meu Painel (mods.md) -->
-        <a class="navbar-brand d-flex align-items-center" href="<?= $usuario ? getHomeUrl() : BASE_URL . '/index.php' ?>">
+        <a class="navbar-brand d-flex align-items-center text-truncate me-2 me-lg-3" href="<?= $usuario ? getHomeUrl() : BASE_URL . '/index.php' ?>">
             <?php 
                 $logoTamanho = 'normal';
                 $mostrarTexto = true;
@@ -21,12 +21,12 @@ $ehProfissional = isProfissional($usuario);
         </a>
 
         <!-- Controles Mobile (Visíveis apenas em telas < 992px) -->
-        <div class="d-flex align-items-center gap-2 d-lg-none">
+        <div class="d-flex align-items-center gap-2 d-lg-none flex-shrink-0">
             <a href="<?= BASE_URL ?>/cliente/agendar.php" class="btn btn-sm btn-nav-cta-mobile" title="Agendar Horário">
                 <i class="bi bi-calendar-check-fill me-1"></i> Agendar
             </a>
-            <button class="navbar-toggler navbar-toggler-barber" type="button" data-bs-toggle="offcanvas" data-bs-target="#navBarberOffcanvas" aria-controls="navBarberOffcanvas" aria-label="Abrir Menu">
-                <i class="bi bi-list fs-3"></i>
+            <button class="navbar-toggler navbar-toggler-barber d-flex align-items-center justify-content-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#navBarberOffcanvas" aria-controls="navBarberOffcanvas" aria-label="Abrir Menu">
+                <i class="bi bi-list fs-4 lh-1"></i>
             </button>
         </div>
 
