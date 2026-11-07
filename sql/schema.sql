@@ -70,6 +70,14 @@ CREATE TABLE IF NOT EXISTS `agendamentos` (
     `pix_txid` VARCHAR(100) DEFAULT NULL,
     `pix_pago_em` DATETIME DEFAULT NULL,
     `observacoes` TEXT DEFAULT NULL,
+    `origem` ENUM('web', 'balcao') DEFAULT 'web',
+    `cliente_balcao` TINYINT(1) DEFAULT 0,
+    `cliente_nome_avulso` VARCHAR(100) DEFAULT NULL,
+    `taxa_cancelamento` DECIMAL(10,2) DEFAULT 0.00,
+    `valor_reembolsado` DECIMAL(10,2) DEFAULT 0.00,
+    `taxa_isenta` TINYINT(1) DEFAULT 0,
+    `cancelado_em` DATETIME DEFAULT NULL,
+    `motivo_cancelamento` TEXT DEFAULT NULL,
     `recebido_por_id` INT DEFAULT NULL,
     `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agendamento_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
@@ -166,3 +174,86 @@ ON DUPLICATE KEY UPDATE `preco_momento` = VALUES(`preco_momento`);
 INSERT INTO `avaliacoes` (`agendamento_id`, `cliente_id`, `barbeiro_id`, `estrelas`, `comentario`) VALUES
 (1, 5, 2, 5, 'Atendimento impecável! O Lucas manda muito bem no degradê e a toalha quente é outro nível.')
 ON DUPLICATE KEY UPDATE `estrelas` = VALUES(`estrelas`);
+
+
+-- ========================================================
+-- RECURSOS ADICIONAIS CONFORME MODS.MD
+-- ========================================================
+
+-- 8. TABELA DE SERVIÇOS INDIVIDUAIS DOS BARBEIROS
+CREATE TABLE IF NOT EXISTS `barbeiro_servicos` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `barbeiro_id` INT NOT NULL,
+    `nome` VARCHAR(100) NOT NULL,
+    `descricao` TEXT DEFAULT NULL,
+    `preco` DECIMAL(10,2) NOT NULL,
+    `tempo_minutos` INT NOT NULL DEFAULT 30,
+    `categoria` ENUM('cabelo', 'barba', 'combo', 'especial') DEFAULT 'cabelo',
+    `ativo` TINYINT(1) DEFAULT 1,
+    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_barbeiro_servico` FOREIGN KEY (`barbeiro_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. TABELA DE TRANSAÇÕES FINANCEIRAS E COMPROVANTES
+CREATE TABLE IF NOT EXISTS `transacoes` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `codigo_transacao` VARCHAR(50) NOT NULL UNIQUE,
+    `agendamento_id` INT DEFAULT NULL,
+    `tipo` ENUM('recebimento', 'comissao', 'estorno') NOT NULL DEFAULT 'recebimento',
+    `metodo` ENUM('dinheiro', 'pix_fixo', 'mercadopago_pix', 'mercadopago_cartao', 'outro') NOT NULL DEFAULT 'dinheiro',
+    `valor_total` DECIMAL(10,2) NOT NULL,
+    `valor_recebido` DECIMAL(10,2) DEFAULT NULL,
+    `troco` DECIMAL(10,2) DEFAULT 0.00,
+    `cliente_id` INT DEFAULT NULL,
+    `funcionario_id` INT DEFAULT NULL,
+    `operador_id` INT DEFAULT NULL,
+    `status` ENUM('concluida', 'pendente', 'cancelada') DEFAULT 'concluida',
+    `detalhes` TEXT DEFAULT NULL,
+    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_transacao_agendamento` FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transacao_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transacao_funcionario` FOREIGN KEY (`funcionario_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transacao_operador` FOREIGN KEY (`operador_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. TABELA DE CONFIGURAÇÃO DE E-MAIL (SMTP/GMAIL)
+CREATE TABLE IF NOT EXISTS `configuracao_email` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `driver` ENUM('smtp', 'gmail', 'mail') DEFAULT 'gmail',
+    `host` VARCHAR(150) DEFAULT 'smtp.gmail.com',
+    `porta` INT DEFAULT 587,
+    `seguranca` ENUM('tls', 'ssl', 'none') DEFAULT 'tls',
+    `usuario` VARCHAR(150) DEFAULT '',
+    `senha` VARCHAR(255) DEFAULT '',
+    `remetente_nome` VARCHAR(150) DEFAULT 'Corte na Navalha Barbearia',
+    `remetente_email` VARCHAR(150) DEFAULT 'contato@cortenanavalha.com.br',
+    `ativo` TINYINT(1) DEFAULT 0,
+    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. TABELA DE TEMPLATES DE E-MAIL FORMATÁVEIS
+CREATE TABLE IF NOT EXISTS `templates_email` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `slug` VARCHAR(50) NOT NULL UNIQUE,
+    `titulo` VARCHAR(100) NOT NULL,
+    `assunto` VARCHAR(200) NOT NULL,
+    `corpo_html` LONGTEXT NOT NULL,
+    `variaveis_disponiveis` VARCHAR(255) DEFAULT '',
+    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ========================================================
+-- POLÍTICA DE CANCELAMENTO CONFORME LEIS DO CONSUMIDOR (CDC)
+-- ========================================================
+ALTER TABLE `configuracao_empresa` 
+    ADD COLUMN IF NOT EXISTS `taxa_cancelamento_percentual` DECIMAL(5,2) DEFAULT 20.00,
+    ADD COLUMN IF NOT EXISTS `horas_minimas_cancelamento` INT DEFAULT 2,
+    ADD COLUMN IF NOT EXISTS `politica_cancelamento_texto` TEXT NULL;
+
+ALTER TABLE `agendamentos` 
+    ADD COLUMN IF NOT EXISTS `taxa_cancelamento` DECIMAL(10,2) DEFAULT 0.00,
+    ADD COLUMN IF NOT EXISTS `valor_reembolsado` DECIMAL(10,2) DEFAULT 0.00,
+    ADD COLUMN IF NOT EXISTS `taxa_isenta` TINYINT(1) DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS `cancelado_em` DATETIME NULL,
+    ADD COLUMN IF NOT EXISTS `motivo_cancelamento` VARCHAR(255) NULL;

@@ -11,12 +11,8 @@ if (usuarioLogado()) {
     redirecionarPorPerfil($usuario['perfil']);
 }
 
-$tipoPerfil = $_GET['perfil'] ?? 'cliente';
-if (!in_array($tipoPerfil, ['cliente', 'dono'])) {
-    $tipoPerfil = 'cliente';
-}
-
-$paginaTitulo = ($tipoPerfil === 'dono') ? 'Cadastro do Dono da Barbearia' : 'Criar Conta de Cliente | Corte na Navalha';
+$tipoPerfil = 'cliente';
+$paginaTitulo = 'Criar Nova Conta de Cliente | Corte na Navalha';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -34,14 +30,14 @@ require_once __DIR__ . '/includes/header.php';
                         ?>
                     </div>
                     <h3 class="text-white fw-bold mb-1 mt-2">
-                        <?= ($tipoPerfil === 'dono') ? 'Cadastro do Proprietário' : 'Criar Nova Conta de Cliente' ?>
+                        Criar Nova Conta de Cliente
                     </h3>
-                    <p class="text-secondary small mb-0">Preencha seus dados para agendar seus cortes com precisão na navalha</p>
+                    <p class="text-secondary small mb-0">Cadastre-se para agendar seus cortes com precisão e estilo na navalha</p>
                 </div>
 
                 <!-- Formulário de Cadastro -->
                 <form action="<?= BASE_URL ?>/actions/auth_register.php" method="POST" id="formCadastro">
-                    <input type="hidden" name="perfil" value="<?= htmlspecialchars($tipoPerfil) ?>">
+                    <input type="hidden" name="perfil" value="cliente">
 
                     <div class="mb-3">
                         <label for="nome" class="form-label">Nome Completo</label>

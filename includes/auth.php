@@ -29,13 +29,28 @@ function getUsuarioLogado() {
         return null;
     }
     return [
-        'id'        => $_SESSION['usuario_id'],
-        'nome'      => $_SESSION['usuario_nome'] ?? 'Usuário',
-        'email'     => $_SESSION['usuario_email'] ?? '',
-        'perfil'    => $_SESSION['usuario_perfil'] ?? 'cliente',
-        'cpf'       => $_SESSION['usuario_cpf'] ?? '',
-        'telefone'  => $_SESSION['usuario_telefone'] ?? ''
+        'id'               => $_SESSION['usuario_id'],
+        'nome'             => $_SESSION['usuario_nome'] ?? 'Usuário',
+        'email'            => $_SESSION['usuario_email'] ?? '',
+        'perfil'           => $_SESSION['usuario_perfil'] ?? 'cliente',
+        'cpf'              => $_SESSION['usuario_cpf'] ?? '',
+        'telefone'         => $_SESSION['usuario_telefone'] ?? '',
+        'permissoes'       => $_SESSION['usuario_permissoes'] ?? [],
+        'permite_catalogo' => $_SESSION['permite_catalogo'] ?? 0
     ];
+}
+
+/**
+ * Verifica se o usuário autenticado possui determinada permissão
+ */
+function temPermissao($permissao) {
+    if (!usuarioLogado()) return false;
+    $perfil = $_SESSION['usuario_perfil'] ?? '';
+    // Proprietário tem sempre acesso irrestrito
+    if ($perfil === 'dono') return true;
+    $perms = $_SESSION['usuario_permissoes'] ?? [];
+    if (!is_array($perms)) return false;
+    return in_array($permissao, $perms);
 }
 
 /**
@@ -63,24 +78,32 @@ function exigirLogin($perfisPermitidos = []) {
 }
 
 /**
+ * Retorna a URL da Home principal conforme o perfil do usuário
+ */
+function getHomeUrl($perfil = null) {
+    if (!$perfil) {
+        $usuario = getUsuarioLogado();
+        $perfil = $usuario['perfil'] ?? null;
+    }
+    switch ($perfil) {
+        case 'dono':
+            return BASE_URL . '/admin/dashboard.php';
+        case 'barbeiro':
+            return BASE_URL . '/barbeiro/dashboard.php';
+        case 'recepcao':
+            return BASE_URL . '/recepcao/dashboard.php';
+        case 'cliente':
+            return BASE_URL . '/cliente/dashboard.php';
+        default:
+            return BASE_URL . '/index.php';
+    }
+}
+
+/**
  * Redireciona o usuário para o dashboard apropriado de acordo com seu perfil
  */
 function redirecionarPorPerfil($perfil) {
-    switch ($perfil) {
-        case 'dono':
-            header('Location: ' . BASE_URL . '/admin/dashboard.php');
-            break;
-        case 'barbeiro':
-            header('Location: ' . BASE_URL . '/barbeiro/dashboard.php');
-            break;
-        case 'recepcao':
-            header('Location: ' . BASE_URL . '/recepcao/dashboard.php');
-            break;
-        case 'cliente':
-        default:
-            header('Location: ' . BASE_URL . '/cliente/dashboard.php');
-            break;
-    }
+    header('Location: ' . getHomeUrl($perfil));
     exit;
 }
 

@@ -48,15 +48,31 @@ if ($usuario['perfil'] === 'cliente' && $agendamento['cliente_id'] != $usuario['
     exit;
 }
 
-// Buscar itens do agendamento
+// Buscar itens do agendamento (suporte à tabela geral e ao catálogo do barbeiro)
 $stmtItens = $pdo->prepare("
-    SELECT ai.*, s.nome as servico_nome, s.tempo_minutos, s.categoria
+    SELECT ai.*, 
+           COALESCE(ai.nome_servico, s.nome, bs.nome, 'Procedimento') as servico_nome, 
+           COALESCE(s.tempo_minutos, bs.tempo_minutos, 30) as tempo_minutos, 
+           COALESCE(s.categoria, bs.categoria, 'cabelo') as categoria
     FROM agendamento_itens ai
-    JOIN servicos s ON ai.servico_id = s.id
+    LEFT JOIN servicos s ON ai.servico_id = s.id
+    LEFT JOIN barbeiro_servicos bs ON ai.barbeiro_servico_id = bs.id
     WHERE ai.agendamento_id = :id
 ");
 $stmtItens->execute([':id' => $agendamento['id']]);
 $itens = $stmtItens->fetchAll();
+
+// Buscar registro oficial de transação do livro caixa (se houver)
+$stmtTrx = $pdo->prepare("
+    SELECT t.*, op.nome as operador_nome 
+    FROM transacoes t
+    LEFT JOIN usuarios op ON t.operador_id = op.id
+    WHERE t.agendamento_id = :id 
+    ORDER BY t.id DESC 
+    LIMIT 1
+");
+$stmtTrx->execute([':id' => $agendamento['id']]);
+$transacao = $stmtTrx->fetch();
 
 // Garantir QR Code dinâmico para pagamento
 $pixData = obterOuGerarPixAgendamento($agendamento['id'], $pdo);
@@ -142,11 +158,17 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="receipt-row">
                 <span class="text-muted">Cliente:</span>
-                <span class="fw-semibold text-dark"><?= htmlspecialchars($agendamento['cliente_nome']) ?></span>
+                <?php 
+                    $ehBalcao = ($agendamento['origem'] === 'balcao' || !empty($agendamento['cliente_balcao']));
+                    $nomeComprovante = !empty($agendamento['cliente_nome_avulso']) 
+                        ? $agendamento['cliente_nome_avulso'] 
+                        : ($ehBalcao ? 'Cliente Balcão (Não Identificado)' : $agendamento['cliente_nome']);
+                ?>
+                <span class="fw-semibold text-dark"><?= htmlspecialchars($nomeComprovante) ?></span>
             </div>
             <div class="receipt-row">
                 <span class="text-muted">CPF do Cliente:</span>
-                <span><?= htmlspecialchars($agendamento['cliente_cpf']) ?></span>
+                <span><?= $ehBalcao ? 'Atendimento no Balcão' : htmlspecialchars($agendamento['cliente_cpf'] ?? '---') ?></span>
             </div>
             <div class="receipt-row">
                 <span class="text-muted">Forma de Pagamento:</span>
@@ -154,6 +176,30 @@ require_once __DIR__ . '/../includes/header.php';
                     <?= ($agendamento['metodo_pagamento'] === 'pix') ? 'PIX Instantâneo' : 'Pagar na Recepção' ?>
                 </span>
             </div>
+            <?php if (!empty($transacao)): ?>
+                <div class="receipt-row">
+                    <span class="text-muted">Código da Transação:</span>
+                    <strong class="font-monospace text-dark"><?= htmlspecialchars($transacao['codigo_transacao']) ?></strong>
+                </div>
+                <?php if ($transacao['metodo'] === 'dinheiro'): ?>
+                    <div class="receipt-row">
+                        <span class="text-muted">Recebido em Dinheiro:</span>
+                        <span>R$ <?= number_format($transacao['valor_recebido'], 2, ',', '.') ?></span>
+                    </div>
+                    <?php if ($transacao['troco'] > 0): ?>
+                        <div class="receipt-row">
+                            <span class="text-muted">Troco Devolvido:</span>
+                            <strong class="text-success">R$ <?= number_format($transacao['troco'], 2, ',', '.') ?></strong>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+                <?php if (!empty($transacao['operador_nome'])): ?>
+                    <div class="receipt-row">
+                        <span class="text-muted">Operador do Caixa:</span>
+                        <span class="text-dark"><?= htmlspecialchars($transacao['operador_nome']) ?></span>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
             <div class="receipt-row">
                 <span class="text-muted">Status do Atendimento:</span>
                 <span class="badge badge-<?= $agendamento['status_atendimento'] ?> text-uppercase">

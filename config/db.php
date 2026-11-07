@@ -22,6 +22,19 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
+// PALAVRA-CHAVE CONFORME MODS.MD: ACABOUOTESTE
+// Defina como true quando o projeto for para produção para remover todos os atalhos de teste
+if (!defined('ACABOUOTESTE')) {
+    define('ACABOUOTESTE', false);
+}
+
+/**
+ * Verifica se os testes foram finalizados (produção ativa)
+ */
+function acabouOTeste() {
+    return defined('ACABOUOTESTE') && ACABOUOTESTE === true;
+}
+
 // URL Base do Sistema (detectada dinamicamente para raiz do domínio ou qualquer subpasta)
 if (!defined('BASE_URL')) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -131,9 +144,29 @@ function getEmpresaConfig() {
                 'telefone' => '(11) 98765-4321',
                 'email' => 'contato@cortenanavalha.com.br',
                 'endereco' => 'Av. Paulista, 1500 - Bela Vista, São Paulo - SP',
-                'chave_pix_principal' => 'pix@cortenanavalha.com.br'
+                'chave_pix_principal' => 'pix@cortenanavalha.com.br',
+                'tipo_catalogo' => 'global',
+                'metodo_pagamento_ativo' => 'pix_fixo',
+                'mp_public_key' => '',
+                'mp_access_token' => '',
+                'mp_webhook_secret' => '',
+                'mp_sandbox' => 1,
+                'comissao_automatica' => 0,
+                'taxa_cancelamento_percentual' => 20.00,
+                'horas_minimas_cancelamento' => 2,
+                'politica_cancelamento_texto' => 'Cancelamentos com mais de 2 horas de antecedência contam com reembolso integral (100%). Cancelamentos realizados fora deste prazo estão sujeitos à taxa de retenção de até 20% conforme o Código de Defesa do Consumidor para cobrir custos de reserva de horário.'
             ];
         }
+        $config['tipo_catalogo'] = $config['tipo_catalogo'] ?? 'global';
+        $config['metodo_pagamento_ativo'] = $config['metodo_pagamento_ativo'] ?? 'pix_fixo';
+        $config['mp_public_key'] = $config['mp_public_key'] ?? '';
+        $config['mp_access_token'] = $config['mp_access_token'] ?? '';
+        $config['mp_webhook_secret'] = $config['mp_webhook_secret'] ?? '';
+        $config['mp_sandbox'] = (int)($config['mp_sandbox'] ?? 1);
+        $config['comissao_automatica'] = (int)($config['comissao_automatica'] ?? 0);
+        $config['taxa_cancelamento_percentual'] = (float)($config['taxa_cancelamento_percentual'] ?? 20.00);
+        $config['horas_minimas_cancelamento'] = (int)($config['horas_minimas_cancelamento'] ?? 2);
+        $config['politica_cancelamento_texto'] = $config['politica_cancelamento_texto'] ?? 'Cancelamentos com mais de 2 horas de antecedência contam com reembolso integral (100%). Cancelamentos realizados fora deste prazo estão sujeitos à taxa de retenção de até 20% conforme o Código de Defesa do Consumidor para cobrir custos de reserva de horário.';
         return $config;
     } catch (Exception $e) {
         return [];
@@ -215,19 +248,40 @@ function obterOuGerarPixAgendamento($agendamentoId, $pdo = null) {
     $pixCopiaCola = $ag['pix_copia_cola'];
     if (empty($pixCopiaCola)) {
         $empresa = getEmpresaConfig();
-        $chavePix = $empresa['chave_pix_principal'] ?? 'pix@cortenanavalha.com.br';
-        $pixTxId = 'CN' . $ag['id'] . time();
-        $pixCopiaCola = gerarPixCopiaECola(
-            $chavePix,
-            $empresa['nome_barbearia'] ?? 'Corte na Navalha Barbearia',
-            'SAO PAULO',
-            (float)$ag['valor_total'],
-            $pixTxId
-        );
         
-        $up = $pdo->prepare("UPDATE agendamentos SET pix_copia_cola = :copia, pix_txid = :txid, metodo_pagamento = 'pix' WHERE id = :id");
-        $up->execute([':copia' => $pixCopiaCola, ':txid' => $pixTxId, ':id' => $ag['id']]);
-        $ag['pix_copia_cola'] = $pixCopiaCola;
+        // Se o gateway Mercado Pago estiver ativo e configurado
+        if (($empresa['metodo_pagamento_ativo'] ?? '') === 'mercadopago' && !empty($empresa['mp_access_token'])) {
+            require_once __DIR__ . '/../includes/mercadopago.php';
+            $stmtCli = $pdo->prepare("SELECT nome, email, cpf FROM usuarios WHERE id = :cid LIMIT 1");
+            $stmtCli->execute([':cid' => $ag['cliente_id']]);
+            $cliente = $stmtCli->fetch();
+            
+            $resMp = MercadoPagoService::criarPagamentoPix($ag, $cliente ?: ['nome' => 'Cliente', 'email' => 'cliente@gmail.com', 'cpf' => ''], $empresa);
+            if ($resMp['success'] && !empty($resMp['pix_copia_cola'])) {
+                $pixCopiaCola = $resMp['pix_copia_cola'];
+                $pixTxId = 'MP-' . $resMp['payment_id'];
+                $up = $pdo->prepare("UPDATE agendamentos SET pix_copia_cola = :copia, pix_txid = :txid, metodo_pagamento = 'pix' WHERE id = :id");
+                $up->execute([':copia' => $pixCopiaCola, ':txid' => $pixTxId, ':id' => $ag['id']]);
+                $ag['pix_copia_cola'] = $pixCopiaCola;
+            }
+        }
+
+        // Fallback: PIX Fixo BACEN BRCode Padrão
+        if (empty($pixCopiaCola)) {
+            $chavePix = $empresa['chave_pix_principal'] ?? 'pix@cortenanavalha.com.br';
+            $pixTxId = 'CN' . $ag['id'] . time();
+            $pixCopiaCola = gerarPixCopiaECola(
+                $chavePix,
+                $empresa['nome_barbearia'] ?? 'Corte na Navalha Barbearia',
+                'SAO PAULO',
+                (float)$ag['valor_total'],
+                $pixTxId
+            );
+            
+            $up = $pdo->prepare("UPDATE agendamentos SET pix_copia_cola = :copia, pix_txid = :txid, metodo_pagamento = 'pix' WHERE id = :id");
+            $up->execute([':copia' => $pixCopiaCola, ':txid' => $pixTxId, ':id' => $ag['id']]);
+            $ag['pix_copia_cola'] = $pixCopiaCola;
+        }
     }
     
     return [

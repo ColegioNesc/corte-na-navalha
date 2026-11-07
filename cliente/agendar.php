@@ -30,14 +30,19 @@ require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container py-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/index.php" class="text-gold text-decoration-none">Início</a></li>
-            <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/cliente/dashboard.php" class="text-gold text-decoration-none">Área do Cliente</a></li>
-            <li class="breadcrumb-item active text-white" aria-current="page">Novo Agendamento</li>
-        </ol>
-    </nav>
+    <!-- Breadcrumb e Voltar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/index.php" class="text-gold text-decoration-none">Início</a></li>
+                <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/cliente/dashboard.php" class="text-gold text-decoration-none">Área do Cliente</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Novo Agendamento</li>
+            </ol>
+        </nav>
+        <a href="<?= BASE_URL ?>/cliente/dashboard.php" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i> Voltar ao Painel
+        </a>
+    </div>
 
     <div class="row g-4">
         <!-- Coluna Formulário -->
@@ -55,11 +60,50 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <form action="<?= BASE_URL ?>/actions/agendamento_salvar.php" method="POST" id="formAgendamento">
                     
-                    <!-- PASSO 1: Escolha de Procedimentos / Serviços -->
+                    <?php if ($usuario['perfil'] !== 'cliente'): ?>
+                        <!-- Identificação de Balcão para Recepção e Gestão -->
+                        <div class="card p-3 mb-4 bg-dark bg-opacity-75 border border-secondary border-opacity-50 rounded-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="text-white fw-bold mb-0"><i class="bi bi-person-fill text-gold me-2"></i>Identificação do Cliente no Balcão</h6>
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success">Balcão: Isento de Taxa</span>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="checkBalcaoAnonimo" name="cliente_anonimo" value="1" onchange="alternarClienteBalcao(this.checked)">
+                                <label class="form-check-label text-white small fw-bold" for="checkBalcaoAnonimo">
+                                    Agendamento Não Identificado (Cliente sem cadastro no balcão)
+                                </label>
+                            </div>
+                            <div id="campoNomeAvulso" style="display: none;" class="mt-2">
+                                <label class="form-label small text-secondary">Referência / Apelido do Cliente no Balcão</label>
+                                <input type="text" class="form-control form-control-sm" name="cliente_nome_avulso" placeholder="Ex: Sr. Carlos / rapaz de camisa azul">
+                                <small class="text-muted" style="font-size: 0.72rem;">Deixe vazio para registrar como "Cliente Balcão (Não Identificado)".</small>
+                            </div>
+                            <input type="hidden" name="origem" value="balcao">
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- PASSO 1: Escolha do Barbeiro -->
+                    <div class="mb-4">
+                        <label for="barbeiro_id" class="form-label fw-bold">
+                            <i class="bi bi-person-badge text-gold me-1"></i> 1. Escolha o Barbeiro de Preferência
+                        </label>
+                        <select class="form-select py-3" id="barbeiro_id" name="barbeiro_id" required onchange="carregarServicosDoBarbeiro(this.value)">
+                            <option value="">Selecione um barbeiro...</option>
+                            <?php foreach ($barbeiros as $b): ?>
+                                <option value="<?= $b['id'] ?>" <?= ($b['id'] === $barbeiroPreSelecionado) ? 'selected' : '' ?>>
+                                    ✂️ <?= htmlspecialchars($b['nome']) ?> (<?= htmlspecialchars($b['especialidade'] ?? 'Especialista') ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- PASSO 2: Escolha de Procedimentos / Serviços -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label mb-0">1. Escolha os Procedimentos (Corte, Barba ou Ambos)</label>
-                            <span class="badge bg-danger text-white">Seleção Múltipla</span>
+                            <label class="form-label mb-0 fw-bold">
+                                <i class="bi bi-scissors text-gold me-1"></i> 2. Escolha os Procedimentos (Corte, Barba ou Ambos)
+                            </label>
+                            <span id="badgeTipoCatalogo" class="badge bg-danger text-white">Tabela da Barbearia</span>
                         </div>
 
                         <!-- Campo de Pesquisa em Tempo Real de Serviços -->
@@ -79,10 +123,10 @@ require_once __DIR__ . '/../includes/header.php';
                                     $isCheck = ($srv['id'] === $servicoPreSelecionado);
                                 ?>
                                 <div class="col-md-6 item-servico-col">
-                                    <div class="p-3 rounded border border-secondary border-opacity-25 h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico(<?= $srv['id'] ?>)">
+                                    <div class="p-3 rounded border border-secondary border-opacity-25 h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico('global_<?= $srv['id'] ?>')">
                                         <div class="form-check d-flex align-items-start gap-2">
-                                            <input class="form-check-input mt-1 check-servico" type="checkbox" name="servicos[]" value="<?= $srv['id'] ?>" id="srv_<?= $srv['id'] ?>" data-preco="<?= $srv['preco'] ?>" data-tempo="<?= $srv['tempo_minutos'] ?>" data-nome="<?= htmlspecialchars($srv['nome']) ?>" <?= $isCheck ? 'checked' : '' ?> onclick="event.stopPropagation(); atualizarResumo();">
-                                            <label class="form-check-label w-100" for="srv_<?= $srv['id'] ?>" style="cursor: pointer;">
+                                            <input class="form-check-input mt-1 check-servico" type="checkbox" name="servicos[]" value="global_<?= $srv['id'] ?>" id="srv_global_<?= $srv['id'] ?>" data-preco="<?= $srv['preco'] ?>" data-tempo="<?= $srv['tempo_minutos'] ?>" data-nome="<?= htmlspecialchars($srv['nome']) ?>" <?= $isCheck ? 'checked' : '' ?> onclick="event.stopPropagation(); atualizarResumo();">
+                                            <label class="form-check-label w-100" for="srv_global_<?= $srv['id'] ?>" style="cursor: pointer;">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <strong class="text-white item-servico-nome"><?= htmlspecialchars($srv['nome']) ?></strong>
                                                     <span class="text-danger fw-bold">R$ <?= number_format($srv['preco'], 2, ',', '.') ?></span>
@@ -95,19 +139,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                    </div>
-
-                    <!-- PASSO 2: Escolha do Barbeiro -->
-                    <div class="mb-4">
-                        <label for="barbeiro_id" class="form-label">2. Escolha o Barbeiro de Preferência</label>
-                        <select class="form-select py-3" id="barbeiro_id" name="barbeiro_id" required>
-                            <option value="">Selecione um barbeiro...</option>
-                            <?php foreach ($barbeiros as $b): ?>
-                                <option value="<?= $b['id'] ?>" <?= ($b['id'] === $barbeiroPreSelecionado) ? 'selected' : '' ?>>
-                                    ✂️ <?= htmlspecialchars($b['nome']) ?> (<?= htmlspecialchars($b['especialidade'] ?? 'Especialista') ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
                     </div>
 
                     <!-- PASSO 3: Data e Horário -->
@@ -164,6 +195,31 @@ require_once __DIR__ . '/../includes/header.php';
                         <textarea class="form-control" id="observacoes" name="observacoes" rows="2" placeholder="Ex: Preferência por fade alto, disfarçado na zero, barba bem desenhada..."></textarea>
                     </div>
 
+                    <?php 
+                        $horasMinimas = (float)($empresa['horas_minimas_cancelamento'] ?? 2);
+                        $taxaCancelamento = (float)($empresa['taxa_cancelamento_percentual'] ?? 20);
+                    ?>
+                    <!-- Política de Cancelamento -->
+                    <div class="card bg-dark bg-opacity-75 border border-secondary border-opacity-50 p-3 mb-4 rounded-3 shadow-sm">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="text-gold fs-4 mt-1"><i class="bi bi-shield-check"></i></div>
+                            <div>
+                                <h6 class="text-white fw-bold mb-1">Política de Cancelamento & Reembolso</h6>
+                                <p class="text-secondary small mb-2 lh-sm">
+                                    • <strong>Cancelamento Gratuito:</strong> Reembolso integral ao cancelar com pelo menos <strong><?= $horasMinimas ?>h de antecedência</strong>.<br>
+                                    • <strong>Cancelamento Próximo ao Horário:</strong> Para cancelamentos com menos de <?= $horasMinimas ?>h, poderá incidir taxa de até <strong><?= $taxaCancelamento ?>%</strong> pela reserva do profissional.<br>
+                                    • <span class="text-muted">Tip: Em caso de imprevistos ou força maior, a administração poderá conceder isenção.</span>
+                                </p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="concordo_cdc" required checked>
+                                    <label class="form-check-label small text-white-50" for="concordo_cdc">
+                                        Declaro estar ciente e de acordo com a política de cancelamento da barbearia.
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-gold btn-lg w-100 py-3 fw-bold">
                         <i class="bi bi-calendar-check me-2"></i> Confirmar Agendamento
                     </button>
@@ -206,8 +262,54 @@ require_once __DIR__ . '/../includes/header.php';
 <script>
 function toggleServico(id) {
     const check = document.getElementById('srv_' + id);
-    check.checked = !check.checked;
-    atualizarResumo();
+    if (check) {
+        check.checked = !check.checked;
+        atualizarResumo();
+    }
+}
+
+async function carregarServicosDoBarbeiro(barbeiroId) {
+    if (!barbeiroId) return;
+    try {
+        const resp = await fetch('<?= BASE_URL ?>/api/servicos_barbeiro.php?barbeiro_id=' + encodeURIComponent(barbeiroId));
+        const data = await resp.json();
+        if (!data.success || !data.servicos) return;
+
+        const badge = document.getElementById('badgeTipoCatalogo');
+        if (data.usa_individual) {
+            badge.className = 'badge bg-gold text-dark fw-bold';
+            badge.innerText = '✂️ Catálogo Exclusivo do Barbeiro';
+        } else {
+            badge.className = 'badge bg-danger text-white';
+            badge.innerText = 'Tabela Oficial da Barbearia';
+        }
+
+        const container = document.getElementById('containerListaProcedimentos');
+        let html = '';
+        data.servicos.forEach(srv => {
+            html += `
+                <div class="col-md-6 item-servico-col">
+                    <div class="p-3 rounded border border-secondary border-opacity-25 h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico('${srv.id_input}')">
+                        <div class="form-check d-flex align-items-start gap-2">
+                            <input class="form-check-input mt-1 check-servico" type="checkbox" name="servicos[]" value="${srv.id_input}" id="srv_${srv.id_input}" data-preco="${srv.preco}" data-tempo="${srv.tempo_minutos}" data-nome="${srv.nome}" onclick="event.stopPropagation(); atualizarResumo();">
+                            <label class="form-check-label w-100" for="srv_${srv.id_input}" style="cursor: pointer;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="text-white item-servico-nome">${srv.nome}</strong>
+                                    <span class="text-danger fw-bold">R$ ${srv.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <small class="text-secondary d-block mt-1 item-servico-desc">${srv.descricao || ''}</small>
+                                <small class="text-muted d-block mt-1"><i class="bi bi-clock me-1 text-danger"></i>${srv.tempo_minutos} min</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        atualizarResumo();
+    } catch(e) {
+        console.error('Erro ao carregar serviços do barbeiro:', e);
+    }
 }
 
 function atualizarResumo() {
@@ -275,6 +377,12 @@ function filtrarProcedimentosAgendar() {
             col.style.display = 'none';
         }
     });
+}
+function alternarClienteBalcao(isAnonimo) {
+    const campo = document.getElementById('campoNomeAvulso');
+    if (campo) {
+        campo.style.display = isAnonimo ? 'block' : 'none';
+    }
 }
 </script>
 

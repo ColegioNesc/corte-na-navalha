@@ -46,7 +46,10 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="row align-items-center g-3">
             <div class="col-md-7">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon" style="width: 60px; height: 60px; font-size: 1.8rem;">
+                    <a href="<?= BASE_URL ?>/admin/dashboard.php" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" title="Voltar ao Painel Principal">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
+                    <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem;">
                         <i class="bi bi-people-fill"></i>
                     </div>
                     <div>
@@ -55,9 +58,12 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="col-md-5 text-md-end">
-                <button type="button" class="btn btn-gold py-2 px-3" onclick="abrirModalFuncionario()">
-                    <i class="bi bi-person-plus-fill me-1"></i> Cadastrar Novo Funcionário
+            <div class="col-md-5 text-md-end d-flex justify-content-md-end gap-2">
+                <a href="<?= BASE_URL ?>/admin/transacoes.php" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-receipt me-1"></i> Livro Caixa
+                </a>
+                <button type="button" class="btn btn-gold btn-sm py-2 px-3" onclick="abrirModalFuncionario()">
+                    <i class="bi bi-person-plus-fill me-1"></i> Novo Colaborador
                 </button>
             </div>
         </div>
@@ -82,13 +88,13 @@ require_once __DIR__ . '/../includes/header.php';
             <table class="table table-dark table-hover mb-0 align-middle">
                 <thead style="background: #111319;">
                     <tr>
-                        <th class="ps-3">Nome</th>
+                        <th class="ps-3">Nome & Especialidade</th>
                         <th>Perfil</th>
                         <th>E-mail / Telefone</th>
-                        <th>Chave PIX do Colaborador</th>
+                        <th>Chave PIX</th>
                         <th>Comissão (%)</th>
-                        <th>Faturamento Gerado</th>
-                        <th>Comissão Estimada</th>
+                        <th>Faturamento</th>
+                        <th>Status / Permissões</th>
                         <th class="text-end pe-3">Ações</th>
                     </tr>
                 </thead>
@@ -97,11 +103,18 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php 
                             $comissaoPerc = (float)$f['comissao_percentual'];
                             $valorComissao = ((float)$f['total_faturado'] * $comissaoPerc) / 100;
+                            $permissoesAtivas = !empty($f['permissoes']) ? json_decode($f['permissoes'], true) : [];
+                            if (!is_array($permissoesAtivas)) $permissoesAtivas = [];
                         ?>
-                        <tr>
+                        <tr class="<?= empty($f['ativo']) ? 'opacity-75' : '' ?>">
                             <td class="ps-3">
                                 <strong class="text-white d-block"><?= htmlspecialchars($f['nome']) ?></strong>
                                 <small class="text-gold"><?= htmlspecialchars($f['especialidade'] ?? 'Colaborador') ?></small>
+                                <?php if (!empty($f['permite_catalogo_proprio'])): ?>
+                                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger d-inline-block mt-1" style="font-size: 0.68rem;">
+                                        <i class="bi bi-tag-fill me-1"></i> Catálogo Individual Liberado
+                                    </span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <span class="badge bg-dark border border-secondary text-uppercase">
@@ -130,16 +143,47 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                             </td>
                             <td><?= number_format($comissaoPerc, 0) ?>%</td>
-                            <td class="fw-bold">R$ <?= number_format($f['total_faturado'], 2, ',', '.') ?></td>
-                            <td class="text-gold fw-bold">R$ <?= number_format($valorComissao, 2, ',', '.') ?></td>
+                            <td>
+                                <span class="fw-bold d-block text-white">R$ <?= number_format($f['total_faturado'], 2, ',', '.') ?></span>
+                                <small class="text-gold">Comissão: R$ <?= number_format($valorComissao, 2, ',', '.') ?></small>
+                            </td>
+                            <td>
+                                <?php if (!empty($f['ativo'])): ?>
+                                    <span class="badge bg-success bg-opacity-25 text-success border border-success mb-1">Ativo</span>
+                                <?php else: ?>
+                                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger mb-1">Inativo</span>
+                                <?php endif; ?>
+                                
+                                <div class="small text-secondary" style="font-size: 0.75rem;">
+                                    <?= count($permissoesAtivas) ?> permissão(ões)
+                                </div>
+                            </td>
                             <td class="text-end pe-3">
                                 <div class="d-flex justify-content-end gap-1">
+                                    <a href="<?= BASE_URL ?>/admin/transacoes.php?funcionario_id=<?= $f['id'] ?>" class="btn btn-sm btn-outline-info py-1 px-2" title="Ver Extrato e Transações deste Profissional">
+                                        <i class="bi bi-receipt"></i>
+                                    </a>
                                     <button type="button" class="btn btn-sm btn-gold py-1 px-2" title="Pagar Funcionário via Chave PIX" onclick='abrirModalPagarPix(<?= json_encode($f) ?>, <?= $valorComissao ?>)'>
-                                        <i class="bi bi-send-check-fill me-1"></i> Pagar PIX
+                                        <i class="bi bi-send-check-fill me-1"></i> PIX
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Editar Dados" onclick='editarFuncionario(<?= json_encode($f) ?>)'>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Editar Dados e Permissões" onclick='editarFuncionario(<?= json_encode($f) ?>)'>
                                         <i class="bi bi-pencil"></i>
                                     </button>
+                                    <!-- Botão Ativar / Inativar -->
+                                    <form id="formStatusFunc_<?= $f['id'] ?>" action="<?= BASE_URL ?>/actions/funcionario_status.php" method="POST" class="d-inline">
+                                        <input type="hidden" name="id" value="<?= $f['id'] ?>">
+                                        <input type="hidden" name="ativo" value="<?= empty($f['ativo']) ? 1 : 0 ?>">
+                                        <button type="button" class="btn btn-sm <?= empty($f['ativo']) ? 'btn-outline-success' : 'btn-outline-warning' ?> py-1 px-2" title="<?= empty($f['ativo']) ? 'Ativar Colaborador' : 'Inativar Colaborador' ?>" onclick="confirmarStatusFuncionario('formStatusFunc_<?= $f['id'] ?>', '<?= empty($f['ativo']) ? 'ATIVAR' : 'INATIVAR' ?>', '<?= htmlspecialchars($f['nome'], ENT_QUOTES) ?>')">
+                                            <i class="bi <?= empty($f['ativo']) ? 'bi-check-circle' : 'bi-pause-circle' ?>"></i>
+                                        </button>
+                                    </form>
+                                    <!-- Botão Excluir -->
+                                    <form id="formExcluirFunc_<?= $f['id'] ?>" action="<?= BASE_URL ?>/actions/funcionario_excluir.php" method="POST" class="d-inline">
+                                        <input type="hidden" name="id" value="<?= $f['id'] ?>">
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" title="Excluir Colaborador" onclick="confirmarExclusaoFuncionario('formExcluirFunc_<?= $f['id'] ?>', '<?= htmlspecialchars($f['nome'], ENT_QUOTES) ?>')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -252,6 +296,70 @@ require_once __DIR__ . '/../includes/header.php';
                             <label class="form-label">Comissão (%)</label>
                             <input type="number" step="0.5" min="0" max="100" class="form-control" name="comissao_percentual" id="funcComissao" value="50.0">
                         </div>
+
+                        <!-- Configuração de Catálogo Individual -->
+                        <div class="col-12 mt-3 pt-3 border-top border-secondary border-opacity-25" id="blocoCatalogoIndividual">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="permite_catalogo_proprio" id="funcPermiteCatalogo" value="1">
+                                <label class="form-check-label text-white fw-bold" for="funcPermiteCatalogo">
+                                    <i class="bi bi-tag-fill text-danger me-1"></i> Liberar Catálogo Individual para este Barbeiro
+                                </label>
+                            </div>
+                            <small class="text-secondary d-block mt-1">
+                                Quando ativado pelo dono, este barbeiro poderá definir serviços, tempos e preços específicos exclusivos dele.
+                            </small>
+                        </div>
+
+                        <!-- Permissões de Acesso -->
+                        <div class="col-12 mt-3 pt-3 border-top border-secondary border-opacity-25">
+                            <label class="form-label text-gold fw-bold mb-2">
+                                <i class="bi bi-shield-check me-1"></i> Permissões de Acesso:
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input perm-check" type="checkbox" name="permissoes[]" value="gerenciar_agendamentos" id="permAgendamentos">
+                                        <label class="form-check-label text-secondary small" for="permAgendamentos">
+                                            Gerenciar agendamentos
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input perm-check" type="checkbox" name="permissoes[]" value="operar_caixa" id="permCaixa">
+                                        <label class="form-check-label text-secondary small" for="permCaixa">
+                                            Operar caixa e recebimentos
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input perm-check" type="checkbox" name="permissoes[]" value="ver_financeiro" id="permFinanceiro">
+                                        <label class="form-check-label text-secondary small" for="permFinanceiro">
+                                            Visualizar relatórios financeiros
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input perm-check" type="checkbox" name="permissoes[]" value="gerenciar_servicos_proprios" id="permServicos">
+                                        <label class="form-check-label text-secondary small" for="permServicos">
+                                            Gerenciar serviços do próprio catálogo
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status da Conta -->
+                        <div class="col-12 mt-2 pt-2 border-top border-secondary border-opacity-25">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="ativo" id="funcAtivo" value="1" checked>
+                                <label class="form-check-label text-white" for="funcAtivo">
+                                    Colaborador Ativo
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -346,11 +454,18 @@ function abrirModalFuncionario() {
     document.getElementById('funcEspecialidade').value = '';
     document.getElementById('funcChavePix').value = '';
     document.getElementById('funcComissao').value = '50.0';
+    document.getElementById('funcPermiteCatalogo').checked = false;
+    document.getElementById('funcAtivo').checked = true;
+    
+    document.querySelectorAll('.perm-check').forEach(chk => {
+        chk.checked = false;
+    });
+
     new bootstrap.Modal(document.getElementById('modalFuncionario')).show();
 }
 
 function editarFuncionario(f) {
-    document.getElementById('modalFuncionarioTitulo').innerText = 'Editar Colaborador';
+    document.getElementById('modalFuncionarioTitulo').innerText = 'Editar Colaborador & Permissões';
     document.getElementById('funcId').value = f.id;
     document.getElementById('funcNome').value = f.nome;
     document.getElementById('funcPerfil').value = f.perfil;
@@ -362,6 +477,21 @@ function editarFuncionario(f) {
     document.getElementById('funcTipoPix').value = f.tipo_chave_pix || 'E-mail';
     document.getElementById('funcChavePix').value = f.chave_pix || '';
     document.getElementById('funcComissao').value = f.comissao_percentual || '50.0';
+    document.getElementById('funcPermiteCatalogo').checked = parseInt(f.permite_catalogo_proprio || 0) === 1;
+    document.getElementById('funcAtivo').checked = parseInt(f.ativo ?? 1) === 1;
+
+    let perms = [];
+    try {
+        if (f.permissoes) {
+            perms = typeof f.permissoes === 'string' ? JSON.parse(f.permissoes) : f.permissoes;
+        }
+    } catch(e) { perms = []; }
+    if (!Array.isArray(perms)) perms = [];
+
+    document.querySelectorAll('.perm-check').forEach(chk => {
+        chk.checked = perms.includes(chk.value);
+    });
+
     new bootstrap.Modal(document.getElementById('modalFuncionario')).show();
 }
 
@@ -387,6 +517,30 @@ function abrirModalPagarPix(f, valorEstimado) {
     document.getElementById('pagarValor').value = valorEstimado > 0 ? valorEstimado.toFixed(2) : '50.00';
 
     new bootstrap.Modal(document.getElementById('modalPagarPix')).show();
+}
+
+function confirmarStatusFuncionario(formId, acao, nome) {
+    abrirModalConfirmacao(
+        'Alterar Status de Colaborador',
+        `Deseja realmente <strong>${acao}</strong> o colaborador <strong>${nome}</strong>?`,
+        function() {
+            document.getElementById(formId).submit();
+        },
+        acao,
+        acao === 'ATIVAR' ? 'btn-success' : 'btn-warning'
+    );
+}
+
+function confirmarExclusaoFuncionario(formId, nome) {
+    abrirModalConfirmacao(
+        'Confirmar Remoção de Colaborador',
+        `ATENÇÃO: Deseja realmente remover o colaborador <strong>${nome}</strong> do sistema? Esta ação é permanente e irreversível.`,
+        function() {
+            document.getElementById(formId).submit();
+        },
+        'Sim, Remover',
+        'btn-danger'
+    );
 }
 
 // Se foi chamado com pagar_id via URL

@@ -18,44 +18,40 @@ $cpf       = trim($_POST['cpf'] ?? '');
 $telefone  = trim($_POST['telefone'] ?? '');
 $senha     = trim($_POST['senha'] ?? '');
 $confirma  = trim($_POST['confirma_senha'] ?? '');
-$perfil    = trim($_POST['perfil'] ?? 'cliente');
-
-// Normalizar perfil
-if (!in_array($perfil, ['cliente', 'dono'])) {
-    $perfil = 'cliente';
-}
+// Conforme mods.md: todos os usuários criados no cadastro público devem SEMPRE ser usuários comum (cliente)
+$perfil    = 'cliente';
 
 // 1. Validação de preenchimento
 if (empty($nome) || empty($email) || empty($cpf) || empty($senha)) {
     setMensagemToast('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios.');
-    header('Location: ' . BASE_URL . '/cadastro.php' . ($perfil === 'dono' ? '?perfil=dono' : ''));
+    header('Location: ' . BASE_URL . '/cadastro.php');
     exit;
 }
 
 // 2. Validação do Gmail conforme pré-condição dos requisitos
 if (!validarEmail($email, true)) {
     setMensagemToast('warning', 'E-mail Inválido', 'Por favor, informe uma conta de Gmail válida (ex: seu.nome@gmail.com).');
-    header('Location: ' . BASE_URL . '/cadastro.php' . ($perfil === 'dono' ? '?perfil=dono' : ''));
+    header('Location: ' . BASE_URL . '/cadastro.php');
     exit;
 }
 
 // 3. Validação do CPF
 if (!validarCPF($cpf)) {
     setMensagemToast('warning', 'CPF Inválido', 'O CPF informado não é válido. Verifique os números digitados.');
-    header('Location: ' . BASE_URL . '/cadastro.php' . ($perfil === 'dono' ? '?perfil=dono' : ''));
+    header('Location: ' . BASE_URL . '/cadastro.php');
     exit;
 }
 
 // 4. Confirmação de senha
 if ($senha !== $confirma) {
     setMensagemToast('warning', 'Senhas Divergentes', 'A confirmação de senha não coincide com a senha digitada.');
-    header('Location: ' . BASE_URL . '/cadastro.php' . ($perfil === 'dono' ? '?perfil=dono' : ''));
+    header('Location: ' . BASE_URL . '/cadastro.php');
     exit;
 }
 
 if (strlen($senha) < 6) {
     setMensagemToast('warning', 'Senha Curta', 'A senha deve conter no mínimo 6 caracteres.');
-    header('Location: ' . BASE_URL . '/cadastro.php' . ($perfil === 'dono' ? '?perfil=dono' : ''));
+    header('Location: ' . BASE_URL . '/cadastro.php');
     exit;
 }
 
@@ -67,7 +63,7 @@ try {
     $stmtCheck->execute([':email' => $email, ':cpf' => $cpf]);
     if ($stmtCheck->fetch()) {
         setMensagemToast('danger', 'Conta Já Existente', 'Já existe um cadastro com este e-mail ou CPF. Faça login ou use outro.');
-        header('Location: ' . BASE_URL . '/cadastro.php' . ($perfil === 'dono' ? '?perfil=dono' : ''));
+        header('Location: ' . BASE_URL . '/cadastro.php');
         exit;
     }
 

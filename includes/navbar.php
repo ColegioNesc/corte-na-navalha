@@ -11,8 +11,8 @@ $ehProfissional = isProfissional($usuario);
 ?>
 <nav class="navbar navbar-expand-lg navbar-barber sticky-top">
     <div class="container">
-        <!-- Logotipo Oficial da Barbearia -->
-        <a class="navbar-brand d-flex align-items-center" href="<?= BASE_URL ?>/index.php">
+        <!-- Logotipo Oficial da Barbearia: Se logado, vai sempre para o Meu Painel (mods.md) -->
+        <a class="navbar-brand d-flex align-items-center" href="<?= $usuario ? getHomeUrl() : BASE_URL . '/index.php' ?>">
             <?php 
                 $logoTamanho = 'normal';
                 $mostrarTexto = true;
@@ -54,22 +54,34 @@ $ehProfissional = isProfissional($usuario);
                     </div>
                 </div>
 
-                <!-- Links de Navegação Institucional -->
+                <!-- Links de Navegação Institucional & Painéis -->
                 <ul class="navbar-nav mb-3 mb-lg-0 ms-lg-3 gap-lg-1">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/index.php">
-                            <i class="bi bi-house-door d-lg-none me-2 text-danger"></i>
-                            Início
+                        <a class="nav-link <?= ($usuario ? 'text-gold fw-bold' : '') ?>" href="<?= $usuario ? getHomeUrl() : BASE_URL . '/index.php' ?>">
+                            <i class="bi <?= $usuario ? 'bi-speedometer2 text-gold' : 'bi-house-door text-danger' ?> d-lg-none me-2"></i>
+                            <?= $usuario ? 'Meu Painel' : 'Início' ?>
                             <i class="bi bi-chevron-right d-lg-none ms-auto text-secondary opacity-50"></i>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/index.php#servicos">
-                            <i class="bi bi-scissors d-lg-none me-2 text-danger"></i>
-                            Procedimentos & Preços
-                            <i class="bi bi-chevron-right d-lg-none ms-auto text-secondary opacity-50"></i>
-                        </a>
-                    </li>
+
+                    <?php if ($usuario && $usuario['perfil'] === 'cliente'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= BASE_URL ?>/cliente/dashboard.php#catalogo">
+                                <i class="bi bi-scissors d-lg-none me-2 text-danger"></i>
+                                Catálogo de Serviços
+                                <i class="bi bi-chevron-right d-lg-none ms-auto text-secondary opacity-50"></i>
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= BASE_URL ?>/index.php#servicos">
+                                <i class="bi bi-scissors d-lg-none me-2 text-danger"></i>
+                                Procedimentos & Preços
+                                <i class="bi bi-chevron-right d-lg-none ms-auto text-secondary opacity-50"></i>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
                     <li class="nav-item">
                         <a class="nav-link" href="<?= BASE_URL ?>/index.php#sobre">
                             <i class="bi bi-info-circle d-lg-none me-2 text-danger"></i>
@@ -79,12 +91,20 @@ $ehProfissional = isProfissional($usuario);
                     </li>
                 </ul>
 
-                <!-- Área da Direita: Busca Desktop + CTA Agendar + Perfil/Login -->
+                <!-- Área da Direita: Busca Desktop Compacta (Ícone Expansível) + CTA Agendar + Perfil/Login -->
                 <div class="navbar-actions-group d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-2 mt-auto mt-lg-0 pt-3 pt-lg-0">
-                    <!-- Campo de Busca no Desktop (Compacto e Expansível) -->
-                    <div class="nav-search-wrap d-none d-lg-block">
-                        <i class="bi bi-search nav-search-icon"></i>
-                        <input type="search" id="navbarSearch" class="form-control nav-search-input" placeholder="Buscar..." aria-label="Pesquisar procedimentos da barbearia" onkeydown="if(event.key==='Enter') executarBuscaGlobal(this)">
+                    <!-- Ícone de Busca Expansível no Desktop (mods.md: apenas ícone que expande para não ocupar a barra) -->
+                    <div class="d-none d-lg-flex align-items-center position-relative">
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center" id="btnToggleNavSearch" onclick="toggleNavbarSearch()" style="width: 36px; height: 36px;" title="Buscar procedimentos...">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <div id="navSearchContainer" class="position-absolute end-0 p-1 rounded shadow-lg" style="display: none; width: 300px; z-index: 1050; background: #0e1017; border: 1px solid #dc2626; top: 42px;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-transparent border-0 text-danger"><i class="bi bi-search"></i></span>
+                                <input type="search" id="navbarSearch" class="form-control bg-transparent text-white border-0" placeholder="Buscar corte, procedimento..." onkeydown="if(event.key==='Enter') executarBuscaGlobal(this)">
+                                <button type="button" class="btn btn-link text-secondary p-1" onclick="toggleNavbarSearch()"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Botão CTA Principal de Agendamento (Desktop) -->
@@ -123,12 +143,16 @@ $ehProfissional = isProfissional($usuario);
                                     <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/cliente/agendar.php"><i class="bi bi-plus-circle me-2 text-danger-custom"></i>Novo Agendamento</a></li>
                                 <?php elseif ($usuario['perfil'] === 'barbeiro'): ?>
                                     <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/barbeiro/dashboard.php"><i class="bi bi-scissors me-2 text-danger-custom"></i>Painel do Barbeiro</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/barbeiro/meus_servicos.php"><i class="bi bi-tag me-2 text-danger-custom"></i>Meus Serviços & Preços</a></li>
                                 <?php elseif ($usuario['perfil'] === 'recepcao'): ?>
-                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/recepcao/dashboard.php"><i class="bi bi-receipt me-2 text-danger-custom"></i>Painel da Recepção</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/recepcao/dashboard.php"><i class="bi bi-receipt me-2 text-danger-custom"></i>Painel da Recepção & Caixa</a></li>
                                 <?php elseif ($usuario['perfil'] === 'dono'): ?>
                                     <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/dashboard.php"><i class="bi bi-speedometer2 me-2 text-danger-custom"></i>Painel de Gestão</a></li>
-                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/funcionarios.php"><i class="bi bi-people me-2 text-danger-custom"></i>Equipe & Pagamentos</a></li>
-                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/servicos.php"><i class="bi bi-tag me-2 text-danger-custom"></i>Tabela de Preços</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/funcionarios.php"><i class="bi bi-people me-2 text-danger-custom"></i>Equipe & Permissões</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/servicos.php"><i class="bi bi-tag me-2 text-danger-custom"></i>Tabela de Preços & Catálogo</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/transacoes.php"><i class="bi bi-cash-stack me-2 text-danger-custom"></i>Fluxo de Caixa & Transações</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/pagamentos.php"><i class="bi bi-wallet2 me-2 text-danger-custom"></i>Gateway & Mercado Pago</a></li>
+                                    <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/email_config.php"><i class="bi bi-envelope-at me-2 text-danger-custom"></i>Central de E-mail & Mensagens</a></li>
                                     <li><a class="dropdown-item py-2" href="<?= BASE_URL ?>/admin/empresa.php"><i class="bi bi-gear me-2 text-danger-custom"></i>Dados da Barbearia</a></li>
                                 <?php endif; ?>
                                 
@@ -164,12 +188,16 @@ $ehProfissional = isProfissional($usuario);
                                     <a class="mobile-nav-link" href="<?= BASE_URL ?>/cliente/agendar.php"><i class="bi bi-plus-circle me-2 text-danger"></i>Novo Agendamento</a>
                                 <?php elseif ($usuario['perfil'] === 'barbeiro'): ?>
                                     <a class="mobile-nav-link" href="<?= BASE_URL ?>/barbeiro/dashboard.php"><i class="bi bi-scissors me-2 text-danger"></i>Painel do Barbeiro</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/barbeiro/meus_servicos.php"><i class="bi bi-tag me-2 text-danger"></i>Meus Serviços & Preços</a>
                                 <?php elseif ($usuario['perfil'] === 'recepcao'): ?>
-                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/recepcao/dashboard.php"><i class="bi bi-receipt me-2 text-danger"></i>Painel da Recepção</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/recepcao/dashboard.php"><i class="bi bi-receipt me-2 text-danger"></i>Painel da Recepção & Caixa</a>
                                 <?php elseif ($usuario['perfil'] === 'dono'): ?>
                                     <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/dashboard.php"><i class="bi bi-speedometer2 me-2 text-danger"></i>Painel de Gestão</a>
-                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/funcionarios.php"><i class="bi bi-people me-2 text-danger"></i>Equipe</a>
-                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/servicos.php"><i class="bi bi-tag me-2 text-danger"></i>Preços</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/funcionarios.php"><i class="bi bi-people me-2 text-danger"></i>Equipe & Permissões</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/servicos.php"><i class="bi bi-tag me-2 text-danger"></i>Tabela & Catálogo</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/transacoes.php"><i class="bi bi-cash-stack me-2 text-danger"></i>Fluxo de Caixa</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/pagamentos.php"><i class="bi bi-wallet2 me-2 text-danger"></i>Gateway & Mercado Pago</a>
+                                    <a class="mobile-nav-link" href="<?= BASE_URL ?>/admin/email_config.php"><i class="bi bi-envelope-at me-2 text-danger"></i>E-mails & Mensagens</a>
                                 <?php endif; ?>
                                 <a class="mobile-nav-link" href="<?= BASE_URL ?>/perfil.php"><i class="bi bi-person-gear me-2 text-secondary"></i>Meu Perfil</a>
                                 <a class="mobile-nav-link text-danger" href="<?= BASE_URL ?>/actions/auth_logout.php"><i class="bi bi-box-arrow-right me-2"></i>Sair da Conta</a>
@@ -211,3 +239,30 @@ $ehProfissional = isProfissional($usuario);
         </div>
     </div>
 </nav>
+
+<script>
+function toggleNavbarSearch() {
+    const box = document.getElementById('navSearchContainer');
+    if (!box) return;
+    if (box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'block';
+        const input = document.getElementById('navbarSearch');
+        if (input) {
+            input.focus();
+        }
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+// Fechar busca ao clicar fora
+document.addEventListener('click', function(e) {
+    const box = document.getElementById('navSearchContainer');
+    const btn = document.getElementById('btnToggleNavSearch');
+    if (box && btn && box.style.display === 'block') {
+        if (!box.contains(e.target) && !btn.contains(e.target)) {
+            box.style.display = 'none';
+        }
+    }
+});
+</script>

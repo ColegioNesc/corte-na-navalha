@@ -116,7 +116,8 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <!-- Atalhos de Acesso Rápido para Teste -->
+                <?php if (!acabouOTeste()): ?>
+                <!-- Atalhos de Acesso Rápido para Teste (Ocultados automaticamente quando ACABOUOTESTE for ativado) -->
                 <div class="mt-4 p-3 rounded" style="background: rgba(220, 38, 38, 0.05); border: 1px dashed rgba(220, 38, 38, 0.4);">
                     <small class="text-danger fw-bold d-block mb-2 text-center text-uppercase" style="letter-spacing: 0.5px;">
                         <i class="bi bi-lightning-charge-fill"></i> Acessos Rápidos de Demonstração
@@ -129,17 +130,17 @@ require_once __DIR__ . '/includes/header.php';
                         </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-truncate text-white small" onclick="preencherLogin('lucas@cortenanavalha.com.br', '123456', 'barbeiro')">
-                                ✂️ Barbeiro (Profissional)
+                                ✂️ Barbeiro
                             </button>
                         </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-truncate text-white small" onclick="preencherLogin('recepcao@cortenanavalha.com.br', '123456', 'recepcao')">
-                                📋 Recepção (Profissional)
+                                📋 Recepção
                             </button>
                         </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-truncate text-white small" onclick="preencherLogin('dono@cortenanavalha.com.br', '123456', 'dono')">
-                                👑 Dono (Gestão)
+                                👑 Dono
                             </button>
                         </div>
                     </div>
@@ -147,6 +148,7 @@ require_once __DIR__ . '/includes/header.php';
                         <small class="text-muted" style="font-size: 0.72rem;">Senha padrão de teste: 123456</small>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

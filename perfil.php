@@ -66,6 +66,13 @@ require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container py-4">
+    <!-- Botão Voltar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="<?= getHomeUrl() ?>" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i> Voltar ao Painel
+        </a>
+    </div>
+
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <!-- Card Principal de Identificação -->
@@ -134,7 +141,7 @@ require_once __DIR__ . '/includes/header.php';
 
                     <?php if ($ehProfissional): ?>
                         <h5 class="text-white fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">
-                            <i class="bi bi-qr-code text-danger me-2"></i>Dados Financeiros do Profissional (Repasses PIX)
+                            <i class="bi bi-qr-code text-danger me-2"></i>Chave PIX para Comissões
                         </h5>
 
                         <div class="row g-3 mb-4">
@@ -160,9 +167,9 @@ require_once __DIR__ . '/includes/header.php';
                     </h5>
 
                     <div class="mb-4">
-                        <label for="nova_senha" class="form-label">Nova Senha (Opcional)</label>
+                        <label for="nova_senha" class="form-label">Nova Senha</label>
                         <input type="password" class="form-control" id="nova_senha" name="nova_senha" placeholder="Deixe em branco para manter a senha atual" minlength="6">
-                        <small class="text-muted" style="font-size: 0.72rem;">Mínimo 6 caracteres.</small>
+                        <small class="text-muted" style="font-size: 0.72rem;">Tip: opcional. Preencha apenas se desejar trocar a senha atual (mínimo 6 caracteres).</small>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center">

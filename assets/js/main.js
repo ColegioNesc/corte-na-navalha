@@ -112,6 +112,20 @@ function executarBuscaGlobal(inputEl) {
     const termo = input.value.trim().toLowerCase();
     if (!termo) return;
 
+    // Se estiver no dashboard do cliente, ativa a aba de catálogo e filtra
+    const inputCatCliente = document.getElementById('filtroCatalogoInput');
+    const tabCatBtn = document.getElementById('tab-catalogo-btn');
+    if (inputCatCliente && tabCatBtn) {
+        tabCatBtn.click();
+        inputCatCliente.value = termo;
+        if (typeof filtrarCatalogoCliente === 'function') {
+            filtrarCatalogoCliente();
+        }
+        inputCatCliente.scrollIntoView({ behavior: 'smooth' });
+        showToast('info', 'Catálogo Filtrado', `Exibindo procedimentos para "${termo}".`);
+        return;
+    }
+
     // Se estiver na página inicial, rola até serviços e filtra
     const containerServicos = document.getElementById('servicos');
     if (containerServicos) {

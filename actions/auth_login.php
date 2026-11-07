@@ -29,7 +29,7 @@ try {
     $loginLimpo = preg_replace('/[^0-9]/', '', $login);
 
     // Busca usuário por e-mail ou por CPF
-    $sql = "SELECT * FROM usuarios WHERE (email = :loginEmail OR cpf = :loginCpf OR REPLACE(REPLACE(cpf, '.', ''), '-', '') = :loginLimpo) AND ativo = 1 LIMIT 1";
+    $sql = "SELECT * FROM usuarios WHERE (email = :loginEmail OR cpf = :loginCpf OR REPLACE(REPLACE(cpf, '.', ''), '-', '') = :loginLimpo) LIMIT 1";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':loginEmail' => $login,
@@ -40,19 +40,27 @@ try {
     $usuario = $stmt->fetch();
 
     if ($usuario && password_verify($senha, $usuario['senha'])) {
+        if (empty($usuario['ativo'])) {
+            setMensagemToast('danger', 'Acesso Bloqueado', 'Esta conta foi inativada pela administração da barbearia.');
+            header('Location: ' . BASE_URL . '/login.php' . ($perfilDesejado ? '?perfil=' . urlencode($perfilDesejado) : ''));
+            exit;
+        }
+
         $perfilReal = $usuario['perfil'];
         $isProf = in_array($perfilReal, ['barbeiro', 'recepcao', 'dono']);
         $tipoUsuario = $isProf ? 'profissional' : 'cliente';
         $tipoFormatado = getTipoUsuarioFormatado($perfilReal);
 
         // Salvar dados na sessão nativa
-        $_SESSION['usuario_id']       = $usuario['id'];
-        $_SESSION['usuario_nome']     = $usuario['nome'];
-        $_SESSION['usuario_email']    = $usuario['email'];
-        $_SESSION['usuario_cpf']      = $usuario['cpf'];
-        $_SESSION['usuario_telefone'] = $usuario['telefone'];
-        $_SESSION['usuario_perfil']   = $perfilReal;
-        $_SESSION['usuario_tipo']     = $tipoUsuario;
+        $_SESSION['usuario_id']          = $usuario['id'];
+        $_SESSION['usuario_nome']        = $usuario['nome'];
+        $_SESSION['usuario_email']       = $usuario['email'];
+        $_SESSION['usuario_cpf']         = $usuario['cpf'];
+        $_SESSION['usuario_telefone']    = $usuario['telefone'];
+        $_SESSION['usuario_perfil']      = $perfilReal;
+        $_SESSION['usuario_tipo']        = $tipoUsuario;
+        $_SESSION['usuario_permissoes']  = !empty($usuario['permissoes']) ? json_decode($usuario['permissoes'], true) : [];
+        $_SESSION['permite_catalogo']    = (int)($usuario['permite_catalogo_proprio'] ?? 0);
 
         $msgBoasVindas = $isProf 
             ? "Olá, " . htmlspecialchars($usuario['nome']) . "! Acesso operacional liberado como {$tipoFormatado}."

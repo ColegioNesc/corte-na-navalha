@@ -24,6 +24,12 @@ $chavePix      = trim($_POST['chave_pix'] ?? '');
 $tipoChavePix  = trim($_POST['tipo_chave_pix'] ?? 'E-mail');
 $comissao      = (float)($_POST['comissao_percentual'] ?? 50.0);
 $perfil        = trim($_POST['perfil'] ?? 'barbeiro');
+$permiteCatalogo = isset($_POST['permite_catalogo_proprio']) ? 1 : 0;
+$ativo         = isset($_POST['ativo']) ? (int)$_POST['ativo'] : 1;
+
+// Processar permissões selecionadas
+$permissoesArray = isset($_POST['permissoes']) && is_array($_POST['permissoes']) ? $_POST['permissoes'] : [];
+$permissoesJson  = !empty($permissoesArray) ? json_encode(array_values($permissoesArray)) : null;
 
 if (empty($nome) || empty($email) || empty($cpf)) {
     setMensagemToast('warning', 'Campos Obrigatórios', 'Nome, E-mail e CPF são obrigatórios.');
@@ -41,65 +47,75 @@ try {
                 UPDATE usuarios 
                 SET nome = :nome, email = :email, cpf = :cpf, telefone = :telefone,
                     senha = :senha, especialidade = :especialidade, chave_pix = :chave_pix,
-                    tipo_chave_pix = :tipo_chave_pix, comissao_percentual = :comissao, perfil = :perfil
+                    tipo_chave_pix = :tipo_chave_pix, comissao_percentual = :comissao, perfil = :perfil,
+                    permite_catalogo_proprio = :permite_catalogo, permissoes = :permissoes, ativo = :ativo
                 WHERE id = :id
             ";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                ':nome'          => $nome,
-                ':email'         => $email,
-                ':cpf'           => $cpf,
-                ':telefone'      => $telefone,
-                ':senha'         => password_hash($senha, PASSWORD_DEFAULT),
-                ':especialidade' => $especialidade,
-                ':chave_pix'     => $chavePix,
-                ':tipo_chave_pix'=> $tipoChavePix,
-                ':comissao'      => $comissao,
-                ':perfil'        => $perfil,
-                ':id'            => $id
+                ':nome'             => $nome,
+                ':email'            => $email,
+                ':cpf'              => $cpf,
+                ':telefone'         => $telefone,
+                ':senha'            => password_hash($senha, PASSWORD_DEFAULT),
+                ':especialidade'    => $especialidade,
+                ':chave_pix'        => $chavePix,
+                ':tipo_chave_pix'   => $tipoChavePix,
+                ':comissao'         => $comissao,
+                ':perfil'           => $perfil,
+                ':permite_catalogo' => $permiteCatalogo,
+                ':permissoes'       => $permissoesJson,
+                ':ativo'            => $ativo,
+                ':id'               => $id
             ]);
         } else {
             $sql = "
                 UPDATE usuarios 
                 SET nome = :nome, email = :email, cpf = :cpf, telefone = :telefone,
                     especialidade = :especialidade, chave_pix = :chave_pix,
-                    tipo_chave_pix = :tipo_chave_pix, comissao_percentual = :comissao, perfil = :perfil
+                    tipo_chave_pix = :tipo_chave_pix, comissao_percentual = :comissao, perfil = :perfil,
+                    permite_catalogo_proprio = :permite_catalogo, permissoes = :permissoes, ativo = :ativo
                 WHERE id = :id
             ";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                ':nome'          => $nome,
-                ':email'         => $email,
-                ':cpf'           => $cpf,
-                ':telefone'      => $telefone,
-                ':especialidade' => $especialidade,
-                ':chave_pix'     => $chavePix,
-                ':tipo_chave_pix'=> $tipoChavePix,
-                ':comissao'      => $comissao,
-                ':perfil'        => $perfil,
-                ':id'            => $id
+                ':nome'             => $nome,
+                ':email'            => $email,
+                ':cpf'              => $cpf,
+                ':telefone'         => $telefone,
+                ':especialidade'    => $especialidade,
+                ':chave_pix'        => $chavePix,
+                ':tipo_chave_pix'   => $tipoChavePix,
+                ':comissao'         => $comissao,
+                ':perfil'           => $perfil,
+                ':permite_catalogo' => $permiteCatalogo,
+                ':permissoes'       => $permissoesJson,
+                ':ativo'            => $ativo,
+                ':id'               => $id
             ]);
         }
-        setMensagemToast('success', 'Atualizado com Sucesso!', 'Dados do colaborador foram atualizados.');
+        setMensagemToast('success', 'Atualizado com Sucesso!', 'Dados e permissões do colaborador foram atualizados.');
     } else {
         // Criar novo funcionário
         $senhaPadrao = !empty($senha) ? $senha : '123456';
         $sql = "
-            INSERT INTO usuarios (nome, email, cpf, telefone, senha, perfil, especialidade, chave_pix, tipo_chave_pix, comissao_percentual, ativo)
-            VALUES (:nome, :email, :cpf, :telefone, :senha, :perfil, :especialidade, :chave_pix, :tipo_chave_pix, :comissao, 1)
+            INSERT INTO usuarios (nome, email, cpf, telefone, senha, perfil, especialidade, chave_pix, tipo_chave_pix, comissao_percentual, permite_catalogo_proprio, permissoes, ativo)
+            VALUES (:nome, :email, :cpf, :telefone, :senha, :perfil, :especialidade, :chave_pix, :tipo_chave_pix, :comissao, :permite_catalogo, :permissoes, 1)
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':nome'          => $nome,
-            ':email'         => $email,
-            ':cpf'           => $cpf,
-            ':telefone'      => $telefone,
-            ':senha'         => password_hash($senhaPadrao, PASSWORD_DEFAULT),
-            ':perfil'        => $perfil,
-            ':especialidade' => $especialidade,
-            ':chave_pix'     => $chavePix,
-            ':tipo_chave_pix'=> $tipoChavePix,
-            ':comissao'      => $comissao
+            ':nome'             => $nome,
+            ':email'            => $email,
+            ':cpf'              => $cpf,
+            ':telefone'         => $telefone,
+            ':senha'            => password_hash($senhaPadrao, PASSWORD_DEFAULT),
+            ':perfil'           => $perfil,
+            ':especialidade'    => $especialidade,
+            ':chave_pix'        => $chavePix,
+            ':tipo_chave_pix'   => $tipoChavePix,
+            ':comissao'         => $comissao,
+            ':permite_catalogo' => $permiteCatalogo,
+            ':permissoes'       => $permissoesJson
         ]);
         setMensagemToast('success', 'Colaborador Cadastrado!', 'Novo funcionário cadastrado com sucesso. Senha inicial configurada.');
     }

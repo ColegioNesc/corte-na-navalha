@@ -9,35 +9,94 @@ require_once __DIR__ . '/../includes/auth.php';
 exigirLogin(['dono']);
 
 $pdo = getDBConnection();
+$empresa = getEmpresaConfig();
 
-// Buscar todos os serviços
+// Buscar todos os serviços gerais da barbearia
 $servicos = $pdo->query("SELECT * FROM servicos ORDER BY categoria ASC, preco ASC")->fetchAll();
+
+// Buscar barbeiros e contagem de serviços individuais (se houver)
+$barbeirosSql = "
+    SELECT u.id, u.nome, u.permite_catalogo_proprio,
+           COUNT(bs.id) as total_servicos_proprios
+    FROM usuarios u
+    LEFT JOIN barbeiro_servicos bs ON bs.barbeiro_id = u.id AND bs.ativo = 1
+    WHERE u.perfil = 'barbeiro' AND u.ativo = 1
+    GROUP BY u.id
+    ORDER BY u.nome ASC
+";
+$barbeirosComCatalogo = $pdo->query($barbeirosSql)->fetchAll();
 
 $paginaTitulo = 'Tabela de Preços & Procedimentos | Gestão';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container py-4">
-    <!-- Cabeçalho -->
+    <!-- Cabeçalho com Botão Voltar -->
     <div class="barber-card p-4 mb-4">
         <div class="row align-items-center g-3">
             <div class="col-md-7">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon" style="width: 60px; height: 60px; font-size: 1.8rem;">
+                    <a href="<?= BASE_URL ?>/admin/dashboard.php" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" title="Voltar ao Painel Principal">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
+                    <div class="stat-icon" style="width: 50px; height: 50px; font-size: 1.5rem;">
                         <i class="bi bi-tag-fill"></i>
                     </div>
                     <div>
                         <h4 class="text-white fw-bold mb-1">Tabela de Preços & Procedimentos</h4>
-                        <p class="text-secondary small mb-0">Gerencie valores de cortes, barbas, combos e tempos de atendimento</p>
+                        <p class="text-secondary small mb-0">Gerencie valores de cortes, barbas, combos e a regra de catálogos dos barbeiros</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-5 text-md-end">
-                <button type="button" class="btn btn-gold py-2 px-3" onclick="abrirModalServico()">
+                <button type="button" class="btn btn-gold btn-sm py-2 px-3" onclick="abrirModalServico()">
                     <i class="bi bi-plus-circle me-1"></i> Adicionar Novo Procedimento
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Regra de Catálogo da Barbearia (Conforme mods.md) -->
+    <div class="barber-card p-4 mb-4 border-danger">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-7">
+                <h5 class="text-white fw-bold mb-1">
+                    <i class="bi bi-gear-fill text-gold me-2"></i>Política de Catálogo de Serviços
+                </h5>
+                <p class="text-secondary small mb-0">
+                    O dono pode definir se todos os profissionais seguem uma <strong>tabela unificada</strong> ou se libera <strong>catálogos individuais</strong> para cada barbeiro definir seus próprios serviços e preços.
+                </p>
+            </div>
+            <div class="col-lg-5">
+                <form action="<?= BASE_URL ?>/actions/catalogo_regra_salvar.php" method="POST" class="d-flex gap-2 align-items-center justify-content-lg-end">
+                    <select name="tipo_catalogo" class="form-select form-select-sm w-auto" style="min-width: 220px;">
+                        <option value="global" <?= ($empresa['tipo_catalogo'] === 'global') ? 'selected' : '' ?>>
+                            🏛️ Tabela Unificada
+                        </option>
+                        <option value="individual" <?= ($empresa['tipo_catalogo'] === 'individual') ? 'selected' : '' ?>>
+                            ✂️ Catálogos Individuais
+                        </option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-gold text-nowrap">
+                        <i class="bi bi-check-lg me-1"></i> Aplicar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <?php if (!empty($barbeirosComCatalogo)): ?>
+            <div class="mt-3 pt-3 border-top border-secondary border-opacity-25">
+                <small class="text-muted d-block mb-2 text-uppercase fw-bold" style="font-size: 0.72rem;">Status dos Barbeiros:</small>
+                <div class="d-flex flex-wrap gap-2">
+                    <?php foreach ($barbeirosComCatalogo as $b): ?>
+                        <span class="badge bg-dark border <?= $b['permite_catalogo_proprio'] ? 'border-warning text-gold' : 'border-secondary text-secondary' ?> p-2">
+                            <?= htmlspecialchars($b['nome']) ?>: 
+                            <strong><?= $b['permite_catalogo_proprio'] ? "Catálogo Próprio Liberado ({$b['total_servicos_proprios']} serviços)" : 'Tabela da Barbearia' ?></strong>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Tabela de Serviços -->
