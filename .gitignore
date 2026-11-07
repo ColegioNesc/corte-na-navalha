@@ -1,3 +1,7 @@
 # Credenciais locais geradas pelo assistente /install
 config/db_credentials.php
 
+# Arquivos compactados de deploy
+*.zip
+
+

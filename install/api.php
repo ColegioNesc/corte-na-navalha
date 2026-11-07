@@ -296,6 +296,10 @@ if ($acao === 'executar_instalacao') {
     $modoProducao  = !empty($data['modo_producao']);
     $nomeBarbearia = trim($data['nome_barbearia'] ?? '');
     $chavePix      = trim($data['chave_pix'] ?? '');
+    $corTema       = trim($data['cor_tema'] ?? 'crimson');
+    if (!in_array($corTema, ['crimson', 'gold', 'emerald', 'royal', 'copper', 'purple'], true)) {
+        $corTema = 'crimson';
+    }
 
     // Dados obrigatórios do Proprietário (Dono) caso Modo Produção esteja ativo
     $donoNome     = trim($data['dono_nome'] ?? '');
@@ -344,20 +348,29 @@ if ($acao === 'executar_instalacao') {
             $logs[] = "Arquivo database/migracao_mods.sql aplicado ({$qtdMods} instruções executadas).";
         }
 
-        // 4. Atualizar Nome da Barbearia e Chave PIX caso o aluno tenha personalizado na tela
-        if ($nomeBarbearia !== '' || $chavePix !== '') {
-            $stmtUp = $pdo->prepare("
-                UPDATE `configuracao_empresa`
-                SET `nome_barbearia` = COALESCE(NULLIF(:nome, ''), `nome_barbearia`),
-                    `chave_pix_principal` = COALESCE(NULLIF(:pix, ''), `chave_pix_principal`)
-                WHERE `id` = 1
-            ");
-            $stmtUp->execute([
-                ':nome' => $nomeBarbearia,
-                ':pix'  => $chavePix
-            ]);
-            $logs[] = "Identificação inicial da barbearia e chave PIX configuradas.";
+        // 4. Garantir coluna cor_tema e atualizar Nome da Barbearia, Chave PIX e Paleta de Cores
+        $checkCor = $pdo->query("SHOW COLUMNS FROM `configuracao_empresa` LIKE 'cor_tema'");
+        if ($checkCor->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `configuracao_empresa` ADD COLUMN `cor_tema` VARCHAR(30) DEFAULT 'crimson'");
         }
+
+        $stmtUp = $pdo->prepare("
+            UPDATE `configuracao_empresa`
+            SET `nome_barbearia` = COALESCE(NULLIF(:nome, ''), `nome_barbearia`),
+                `chave_pix_principal` = COALESCE(NULLIF(:pix, ''), `chave_pix_principal`),
+                `cor_tema` = :cor
+            WHERE `id` = 1
+        ");
+        $stmtUp->execute([
+            ':nome' => $nomeBarbearia,
+            ':pix'  => $chavePix,
+            ':cor'  => $corTema
+        ]);
+        if ($nomeBarbearia !== '') {
+            $stmtEmail = $pdo->prepare("UPDATE `configuracao_email` SET `remetente_nome` = :nome WHERE `id` = 1");
+            @$stmtEmail->execute([':nome' => $nomeBarbearia]);
+        }
+        $logs[] = "Identificação da barbearia, chave PIX e paleta de cores ('{$corTema}') configuradas.";
 
         // 5. Se Modo Produção estiver ativo:
         //    Remove todos os funcionários/clientes/agendamentos fictícios de demonstração

@@ -59,6 +59,32 @@ require_once __DIR__ . '/../includes/header.php';
                     <label class="form-label">Slogan Oficial</label>
                     <input type="text" class="form-control" name="slogan" value="<?= htmlspecialchars($empresa['slogan'] ?? '') ?>">
                 </div>
+
+                <!-- Paleta de Cores do Salão -->
+                <div class="col-12 mt-3">
+                    <label class="form-label"><i class="bi bi-palette-fill text-danger me-1"></i>Paleta de Cores do Sistema</label>
+                    <div class="row g-2">
+                        <?php 
+                        $paletasAdmin = getPaletasCores();
+                        $corAtualAdmin = $empresa['cor_tema'] ?? 'crimson';
+                        foreach ($paletasAdmin as $slugPal => $dadosPal): 
+                            $isAtiva = ($corAtualAdmin === $slugPal);
+                        ?>
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <label class="w-100 h-100" style="cursor: pointer;">
+                                    <input type="radio" name="cor_tema" value="<?= htmlspecialchars($slugPal) ?>" class="d-none" <?= $isAtiva ? 'checked' : '' ?> onchange="document.querySelectorAll('.card-paleta-admin').forEach(c => c.style.borderColor='rgba(255,255,255,0.1)'); this.nextElementSibling.style.borderColor='<?= $dadosPal['light'] ?>';">
+                                    <div class="card-paleta-admin p-2 rounded d-flex align-items-center gap-2 h-100" style="background: #0d0f14; border: 2px solid <?= $isAtiva ? $dadosPal['light'] : 'rgba(255,255,255,0.1)' ?>; transition: all 0.2s ease;">
+                                        <span class="rounded-circle flex-shrink-0" style="width: 24px; height: 24px; background: linear-gradient(135deg, <?= $dadosPal['light'] ?>, <?= $dadosPal['dark'] ?>); border: 2px solid rgba(255,255,255,0.4);"></span>
+                                        <div class="lh-1">
+                                            <strong class="d-block text-white" style="font-size: 0.78rem;"><?= htmlspecialchars($dadosPal['nome']) ?></strong>
+                                            <small class="text-secondary" style="font-size: 0.65rem;"><?= htmlspecialchars($dadosPal['descricao']) ?></small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
 
             <h5 class="text-white fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">

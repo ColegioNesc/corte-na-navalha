@@ -6,6 +6,7 @@ USE `corte_na_navalha`;
 
 -- 1. Novas colunas em configuracao_empresa
 ALTER TABLE `configuracao_empresa`
+    ADD COLUMN IF NOT EXISTS `cor_tema` VARCHAR(30) DEFAULT 'crimson',
     ADD COLUMN IF NOT EXISTS `tipo_catalogo` ENUM('global', 'individual') DEFAULT 'global',
     ADD COLUMN IF NOT EXISTS `metodo_pagamento_ativo` ENUM('pix_fixo', 'mercadopago') DEFAULT 'pix_fixo',
     ADD COLUMN IF NOT EXISTS `mp_public_key` VARCHAR(255) DEFAULT NULL,

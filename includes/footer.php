@@ -4,7 +4,7 @@
 <?php require_once __DIR__ . '/modal_qrcode.php'; ?>
 
 <!-- Footer da Barbearia -->
-<footer class="mt-auto py-5" style="background: #07080b; border-top: 2px solid rgba(220, 38, 38, 0.3);">
+<footer class="mt-auto py-5" style="background: #07080b; border-top: 2px solid rgba(var(--theme-rgb, 220, 38, 38), 0.35);">
     <div class="container">
         <div class="row g-4 mb-4">
             <!-- Coluna 1: Sobre & Logo -->
@@ -70,7 +70,7 @@
         </div>
 
         <div class="border-top border-secondary border-opacity-25 pt-3 text-center text-secondary small">
-            <p class="mb-0">&copy; <?= date('Y') ?> Corte na Navalha Barbearia. Todos os direitos reservados.</p>
+            <p class="mb-0">&copy; <?= date('Y') ?> <?= htmlspecialchars($empresa['nome_barbearia'] ?? 'Corte na Navalha Barbearia') ?>. Todos os direitos reservados.</p>
         </div>
     </div>
 </footer>

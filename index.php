@@ -6,9 +6,13 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/auth.php';
 
-$paginaTitulo = 'Corte na Navalha | Barbearia Tradicional & Moderna';
 $pdo = getDBConnection();
 $empresa = getEmpresaConfig();
+$nomeBarbeariaHome = trim($empresa['nome_barbearia'] ?? 'Corte na Navalha');
+if ($nomeBarbeariaHome === '') {
+    $nomeBarbeariaHome = 'Corte na Navalha';
+}
+$paginaTitulo = $nomeBarbeariaHome . ' | Barbearia Tradicional & Moderna';
 
 // Buscar Serviços Ativos
 $stmtServicos = $pdo->query("SELECT * FROM servicos WHERE ativo = 1 ORDER BY destaque DESC, id ASC");
@@ -50,7 +54,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="row align-items-center">
             <div class="col-lg-8 mx-auto text-center">
                 <span class="badge border border-danger text-danger px-3 py-2 rounded-pill mb-3 text-uppercase fw-semibold" style="letter-spacing: 2px;">
-                    <i class="bi bi-award me-1"></i> A Melhor Experiência de Barbearia
+                    <i class="bi bi-award me-1"></i> <?= htmlspecialchars($nomeBarbeariaHome) ?>
                 </span>
                 <h1 class="hero-title text-white">
                     PRECISÃO NA NAVALHA, <br><span class="text-danger">ESTILO QUE MARCA.</span>
@@ -238,7 +242,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="row align-items-center g-5">
             <div class="col-lg-6">
                 <span class="text-gold fw-bold text-uppercase" style="letter-spacing: 1px;">Sobre Nós</span>
-                <h2 class="text-white mt-1 mb-4">A Essência do Corte na Navalha</h2>
+                <h2 class="text-white mt-1 mb-4">A Essência — <?= htmlspecialchars($nomeBarbeariaHome) ?></h2>
                 <p class="text-secondary leading-relaxed">
                     Nossa barbearia une a tradição dos clássicos barbeiros de outrora com a inovação, conforto e pontualidade que o homem moderno exige. Desde o atendimento acolhedor com café expresso até o acabamento perfeito na navalha e toalha quente, cada minuto aqui é dedicado ao seu bem-estar.
                 </p>

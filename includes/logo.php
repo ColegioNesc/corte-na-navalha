@@ -1,10 +1,44 @@
 <?php
 /**
- * Logotipo Oficial Vetorial - Barbearia Corte na Navalha
- * Design Exclusivo: Navalha Afiada e Tesoura de Precisão com Grafismo Vermelho
+ * Logotipo Oficial Vetorial - Dinâmico conforme Nome e Paleta de Cores da Barbearia
  */
 $logoTamanho = $logoTamanho ?? 'normal'; // small, normal, large
 $mostrarTexto = $mostrarTexto ?? true;
+
+if (!isset($empresa) || !is_array($empresa) || empty($empresa['nome_barbearia'])) {
+    $empresa = function_exists('getEmpresaConfig') ? getEmpresaConfig() : [];
+}
+
+$paletaLogo = function_exists('getPaletaAtiva')
+    ? getPaletaAtiva($empresa['cor_tema'] ?? 'crimson')
+    : [
+        'primary' => '#dc2626',
+        'light'   => '#ef4444',
+        'lighter' => '#fca5a5',
+        'dark'    => '#b91c1c',
+        'rgb'     => '220, 38, 38'
+    ];
+
+$nomeBruto = trim($empresa['nome_barbearia'] ?? 'Corte na Navalha');
+if ($nomeBruto === '') {
+    $nomeBruto = 'Corte na Navalha';
+}
+
+// Se o nome terminar com "Barbearia" e possuir pelo menos 2 palavras antes (ex: "Corte na Navalha Barbearia"),
+// exibe o nome principal no título e mantém "Barbearia Tradicional" no subtítulo
+$nomeExibicao = $nomeBruto;
+if (preg_match('/^(\S+\s+\S+.*)\s+barbearia$/iu', $nomeBruto, $matches)) {
+    $nomeExibicao = trim($matches[1]);
+}
+
+$palavrasLogo = preg_split('/\s+/u', mb_strtoupper($nomeExibicao, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+if (count($palavrasLogo) > 1) {
+    $ultimaPalavraLogo = array_pop($palavrasLogo);
+    $primeiraParteLogo = implode(' ', $palavrasLogo);
+} else {
+    $primeiraParteLogo = '';
+    $ultimaPalavraLogo = $palavrasLogo[0] ?? 'NAVALHA';
+}
 
 $dimensoes = [
     'small'  => ['largura' => 34, 'altura' => 34, 'titulo' => '1.15rem', 'sub' => '0.55rem'],
@@ -14,11 +48,11 @@ $dimensoes = [
 $d = $dimensoes[$logoTamanho] ?? $dimensoes['normal'];
 ?>
 <div class="barber-brand-wrap d-inline-flex align-items-center gap-2 text-decoration-none">
-    <!-- Emblema Vetorial Exclusivo Corte na Navalha -->
+    <!-- Emblema Vetorial Exclusivo -->
     <div class="barber-logo-emblem" style="width: <?= $d['largura'] ?>px; height: <?= $d['altura'] ?>px; flex-shrink: 0;">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; filter: drop-shadow(0 2px 8px rgba(220, 38, 38, 0.4));">
-            <!-- Círculo de Fundo com Borda Vermelha -->
-            <circle cx="50" cy="50" r="46" fill="#120406" stroke="#dc2626" stroke-width="3"/>
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; filter: drop-shadow(0 2px 8px rgba(<?= $paletaLogo['rgb'] ?>, 0.4));">
+            <!-- Círculo de Fundo com Borda da Paleta -->
+            <circle cx="50" cy="50" r="46" fill="#0d0e13" stroke="<?= $paletaLogo['primary'] ?>" stroke-width="3"/>
             <circle cx="50" cy="50" r="41" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3 3"/>
             
             <!-- Tesoura de Barbeiro Cruzada -->
@@ -28,20 +62,20 @@ $d = $dimensoes[$logoTamanho] ?? $dimensoes['normal'];
                 <!-- Lâmina Direita -->
                 <line x1="70" y1="70" x2="32" y2="30"/>
                 <!-- Olhais da Tesoura -->
-                <circle cx="27" cy="74" r="7" stroke="#dc2626" stroke-width="3" fill="none"/>
-                <circle cx="73" cy="74" r="7" stroke="#dc2626" stroke-width="3" fill="none"/>
+                <circle cx="27" cy="74" r="7" stroke="<?= $paletaLogo['primary'] ?>" stroke-width="3" fill="none"/>
+                <circle cx="73" cy="74" r="7" stroke="<?= $paletaLogo['primary'] ?>" stroke-width="3" fill="none"/>
                 <!-- Parafuso Central de Articulação -->
-                <circle cx="50" cy="50" r="3.5" fill="#ef4444" stroke="#ffffff" stroke-width="1.5"/>
+                <circle cx="50" cy="50" r="3.5" fill="<?= $paletaLogo['light'] ?>" stroke="#ffffff" stroke-width="1.5"/>
             </g>
 
             <!-- Navalha Tradicional em Destaque Central -->
             <g id="navalha">
-                <!-- Cabo da Navalha (Vermelho Rubro Texturizado) -->
-                <path d="M50 48 L28 20 C26 18 22 20 23 24 L45 52 Z" fill="#b91c1c" stroke="#ef4444" stroke-width="1.5"/>
+                <!-- Cabo da Navalha -->
+                <path d="M50 48 L28 20 C26 18 22 20 23 24 L45 52 Z" fill="<?= $paletaLogo['dark'] ?>" stroke="<?= $paletaLogo['light'] ?>" stroke-width="1.5"/>
                 <!-- Lâmina de Aço Inox Navalhete (Prata Polido) -->
                 <path d="M50 48 L76 22 C79 19 83 23 80 26 L56 52 Z" fill="url(#metalGradient)" stroke="#ffffff" stroke-width="1.5"/>
                 <!-- Fio de Corte Afiado -->
-                <line x1="56" y1="52" x2="80" y2="26" stroke="#fca5a5" stroke-width="2"/>
+                <line x1="56" y1="52" x2="80" y2="26" stroke="<?= $paletaLogo['lighter'] ?>" stroke-width="2"/>
             </g>
 
             <!-- Gradiente da Lâmina -->
@@ -58,7 +92,10 @@ $d = $dimensoes[$logoTamanho] ?? $dimensoes['normal'];
     <?php if ($mostrarTexto): ?>
         <div class="d-flex flex-column text-start lh-1">
             <span class="brand-title fw-bold text-white" style="font-size: <?= $d['titulo'] ?>; letter-spacing: 1.5px; font-family: 'Oswald', 'Bebas Neue', sans-serif;">
-                CORTE NA <span class="text-danger" style="color: #ef4444 !important;">NAVALHA</span>
+                <?php if ($primeiraParteLogo !== ''): ?>
+                    <?= htmlspecialchars($primeiraParteLogo) ?> 
+                <?php endif; ?>
+                <span class="text-danger" style="color: var(--red-light, <?= $paletaLogo['light'] ?>) !important;"><?= htmlspecialchars($ultimaPalavraLogo) ?></span>
             </span>
             <span class="brand-subtitle text-uppercase d-none d-sm-block" style="font-size: <?= $d['sub'] ?>; letter-spacing: 2.5px; color: #94a3b8; font-weight: 600;">
                 Barbearia Tradicional

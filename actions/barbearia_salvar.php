@@ -30,6 +30,10 @@ $email         = trim($_POST['email'] ?? '');
 $endereco      = trim($_POST['endereco'] ?? '');
 $chavePix      = trim($_POST['chave_pix_principal'] ?? '');
 $tipoChavePix  = trim($_POST['tipo_chave_pix'] ?? 'E-mail');
+$corTema       = trim($_POST['cor_tema'] ?? 'crimson');
+if (!array_key_exists($corTema, getPaletasCores())) {
+    $corTema = 'crimson';
+}
 $taxaCancelamento = (float)($_POST['taxa_cancelamento_percentual'] ?? 20.00);
 if ($taxaCancelamento > 20.0) {
     $taxaCancelamento = 20.0;
@@ -43,6 +47,12 @@ $textoPolitica = trim($_POST['politica_cancelamento_texto'] ?? '');
 try {
     $pdo = getDBConnection();
 
+    // Garante que a coluna cor_tema exista em bancos já instalados
+    $checkCor = $pdo->query("SHOW COLUMNS FROM `configuracao_empresa` LIKE 'cor_tema'");
+    if ($checkCor->rowCount() === 0) {
+        $pdo->exec("ALTER TABLE `configuracao_empresa` ADD COLUMN `cor_tema` VARCHAR(30) DEFAULT 'crimson'");
+    }
+
     $sql = "
         UPDATE configuracao_empresa 
         SET nome_barbearia = :nome,
@@ -53,6 +63,7 @@ try {
             endereco = :endereco,
             chave_pix_principal = :chave_pix,
             tipo_chave_pix = :tipo_chave,
+            cor_tema = :cor_tema,
             taxa_cancelamento_percentual = :taxa_cancelamento,
             horas_minimas_cancelamento = :horas_minimas,
             politica_cancelamento_texto = :texto_politica
@@ -68,6 +79,7 @@ try {
         ':endereco'           => $endereco,
         ':chave_pix'          => $chavePix,
         ':tipo_chave'         => $tipoChavePix,
+        ':cor_tema'           => $corTema,
         ':taxa_cancelamento'  => $taxaCancelamento,
         ':horas_minimas'      => $horasMinimas,
         ':texto_politica'     => $textoPolitica

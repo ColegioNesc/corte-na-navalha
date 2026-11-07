@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS `configuracao_empresa` (
     `horario_fechamento` TIME DEFAULT '20:00:00',
     `chave_pix_principal` VARCHAR(100) DEFAULT 'pix@cortenanavalha.com.br',
     `tipo_chave_pix` VARCHAR(30) DEFAULT 'E-mail',
+    `cor_tema` VARCHAR(30) DEFAULT 'crimson',
     `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

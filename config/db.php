@@ -175,6 +175,86 @@ function getDBConnection() {
 }
 
 /**
+ * Retorna o catálogo de paletas de cores disponíveis para personalizar o salão/barbearia
+ */
+function getPaletasCores(): array {
+    return [
+        'crimson' => [
+            'nome'      => 'Vermelho Navalha',
+            'descricao' => 'Clássico rubro intenso',
+            'primary'   => '#dc2626',
+            'light'     => '#ef4444',
+            'lighter'   => '#fca5a5',
+            'dark'      => '#b91c1c',
+            'darker'    => '#7f1d1d',
+            'rgb'       => '220, 38, 38'
+        ],
+        'gold' => [
+            'nome'      => 'Ouro Imperial',
+            'descricao' => 'Dourado vintage clássico',
+            'primary'   => '#d97706',
+            'light'     => '#f59e0b',
+            'lighter'   => '#fde68a',
+            'dark'      => '#b45309',
+            'darker'    => '#78350f',
+            'rgb'       => '217, 119, 6'
+        ],
+        'emerald' => [
+            'nome'      => 'Verde Esmeralda',
+            'descricao' => 'Estilo britânico elegante',
+            'primary'   => '#059669',
+            'light'     => '#10b981',
+            'lighter'   => '#a7f3d0',
+            'dark'      => '#047857',
+            'darker'    => '#064e3b',
+            'rgb'       => '16, 185, 129'
+        ],
+        'royal' => [
+            'nome'      => 'Azul Royal',
+            'descricao' => 'Tradicional Barber Pole',
+            'primary'   => '#2563eb',
+            'light'     => '#3b82f6',
+            'lighter'   => '#93c5fd',
+            'dark'      => '#1d4ed8',
+            'darker'    => '#1e3a8a',
+            'rgb'       => '37, 99, 235'
+        ],
+        'copper' => [
+            'nome'      => 'Cobre Rústico',
+            'descricao' => 'Amadeirado & Whisky Lounge',
+            'primary'   => '#ea580c',
+            'light'     => '#f97316',
+            'lighter'   => '#fdba74',
+            'dark'      => '#c2410c',
+            'darker'    => '#7c2d12',
+            'rgb'       => '234, 88, 12'
+        ],
+        'purple' => [
+            'nome'      => 'Roxo Urban',
+            'descricao' => 'Visual moderno e urbano',
+            'primary'   => '#7c3aed',
+            'light'     => '#8b5cf6',
+            'lighter'   => '#c4b5fd',
+            'dark'      => '#6d28d9',
+            'darker'    => '#4c1d95',
+            'rgb'       => '124, 58, 237'
+        ]
+    ];
+}
+
+/**
+ * Retorna a paleta de cores ativa da barbearia
+ */
+function getPaletaAtiva(?string $slug = null): array {
+    $paletas = getPaletasCores();
+    if (!$slug) {
+        $emp = getEmpresaConfig();
+        $slug = $emp['cor_tema'] ?? 'crimson';
+    }
+    return $paletas[$slug] ?? $paletas['crimson'];
+}
+
+/**
  * Retorna os dados da barbearia configurados no sistema
  */
 function getEmpresaConfig() {
@@ -191,6 +271,7 @@ function getEmpresaConfig() {
                 'email' => 'contato@cortenanavalha.com.br',
                 'endereco' => 'Av. Paulista, 1500 - Bela Vista, São Paulo - SP',
                 'chave_pix_principal' => 'pix@cortenanavalha.com.br',
+                'cor_tema' => 'crimson',
                 'tipo_catalogo' => 'global',
                 'metodo_pagamento_ativo' => 'pix_fixo',
                 'mp_public_key' => '',
@@ -203,6 +284,7 @@ function getEmpresaConfig() {
                 'politica_cancelamento_texto' => 'Cancelamentos com mais de 2 horas de antecedência contam com reembolso integral (100%). Cancelamentos realizados fora deste prazo estão sujeitos à taxa de retenção de até 20% conforme o Código de Defesa do Consumidor para cobrir custos de reserva de horário.'
             ];
         }
+        $config['cor_tema'] = $config['cor_tema'] ?? 'crimson';
         $config['tipo_catalogo'] = $config['tipo_catalogo'] ?? 'global';
         $config['metodo_pagamento_ativo'] = $config['metodo_pagamento_ativo'] ?? 'pix_fixo';
         $config['mp_public_key'] = $config['mp_public_key'] ?? '';

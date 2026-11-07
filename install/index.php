@@ -126,6 +126,33 @@ if (file_exists($configDir . '/db_credentials.php')) {
             display: block;
             animation: fadeIn 0.25s ease-in-out;
         }
+        .palette-option {
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: #090a0f;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .palette-option:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        .palette-option.active {
+            border-color: var(--red-primary);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+        }
+        .palette-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
@@ -140,10 +167,10 @@ if (file_exists($configDir . '/db_credentials.php')) {
 
             <!-- Cabeçalho da Instalação -->
             <div class="text-center mb-4">
-                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 64px; height: 64px; background: rgba(220,38,38,0.15); border: 2px solid #dc2626;">
-                    <i class="bi bi-scissors fs-2 text-danger"></i>
+                <div id="installerIconCircle" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 64px; height: 64px; background: rgba(220,38,38,0.15); border: 2px solid #dc2626; transition: all 0.3s ease;">
+                    <i id="installerIconScissors" class="bi bi-scissors fs-2" style="color: #ef4444;"></i>
                 </div>
-                <h2 class="brand-font text-white fw-bold mb-1">Corte na <span class="text-danger">Navalha</span></h2>
+                <h2 class="brand-font text-white fw-bold mb-1" id="installerHeaderTitle">Corte na <span id="installerHeaderHighlight" style="color: #ef4444;">Navalha</span></h2>
                 <p class="text-secondary small mb-0">Assistente de Configuração de Hospedagem & Migração de Banco de Dados</p>
             </div>
 
@@ -281,18 +308,83 @@ if (file_exists($configDir . '/db_credentials.php')) {
                         </div>
                     </div>
 
-                    <!-- Dados iniciais opcionais da barbearia -->
+                    <!-- Dados iniciais e Identidade Visual da barbearia -->
                     <div class="p-3 rounded mb-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle);">
-                        <span class="small fw-bold text-danger text-uppercase d-block mb-2"><i class="bi bi-shop me-1"></i> Identificação Inicial da Barbearia</span>
+                        <span class="small fw-bold text-uppercase d-block mb-2" id="labelIdentificacaoBarbearia" style="color: var(--gold-accent);"><i class="bi bi-shop me-1"></i> Identificação & Paleta de Cores da Barbearia</span>
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label small text-secondary mb-1">Nome da Barbearia</label>
-                                <input type="text" id="nome_barbearia" class="form-control form-control-sm" value="Corte na Navalha Barbearia">
+                                <label class="form-label small text-secondary mb-1">Nome da Barbearia / Salão</label>
+                                <input type="text" id="nome_barbearia" class="form-control form-control-sm" value="Corte na Navalha Barbearia" oninput="atualizarPreviewNomeInstalador(this.value)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small text-secondary mb-1">Chave PIX Principal</label>
                                 <input type="text" id="chave_pix" class="form-control form-control-sm" value="pix@cortenanavalha.com.br">
                             </div>
+
+                            <!-- Seletor de Paleta de Cores do Salão -->
+                            <div class="col-12 mt-2">
+                                <label class="form-label small text-secondary mb-1">
+                                    <i class="bi bi-palette-fill me-1"></i> Paleta de Cores do Sistema (Escolha o tema visual do seu salão)
+                                </label>
+                                <input type="hidden" id="cor_tema" value="crimson">
+                                <div class="row g-2">
+                                    <div class="col-6 col-sm-4">
+                                        <div class="palette-option active" data-tema="crimson" onclick="selecionarPaletaInstalador('crimson', '#dc2626', '#ef4444', '#991b1b', '220, 38, 38', this)">
+                                            <span class="palette-swatch" style="background: linear-gradient(135deg, #ef4444, #991b1b);"></span>
+                                            <div class="lh-1">
+                                                <strong class="d-block text-white" style="font-size: 0.78rem;">Vermelho Navalha</strong>
+                                                <small class="text-secondary" style="font-size: 0.66rem;">Rubro Clássico</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <div class="palette-option" data-tema="gold" onclick="selecionarPaletaInstalador('gold', '#d97706', '#f59e0b', '#b45309', '217, 119, 6', this)">
+                                            <span class="palette-swatch" style="background: linear-gradient(135deg, #f59e0b, #b45309);"></span>
+                                            <div class="lh-1">
+                                                <strong class="d-block text-white" style="font-size: 0.78rem;">Ouro Imperial</strong>
+                                                <small class="text-secondary" style="font-size: 0.66rem;">Dourado Vintage</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <div class="palette-option" data-tema="emerald" onclick="selecionarPaletaInstalador('emerald', '#059669', '#10b981', '#047857', '16, 185, 129', this)">
+                                            <span class="palette-swatch" style="background: linear-gradient(135deg, #10b981, #047857);"></span>
+                                            <div class="lh-1">
+                                                <strong class="d-block text-white" style="font-size: 0.78rem;">Verde Esmeralda</strong>
+                                                <small class="text-secondary" style="font-size: 0.66rem;">Estilo Britânico</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <div class="palette-option" data-tema="royal" onclick="selecionarPaletaInstalador('royal', '#2563eb', '#3b82f6', '#1d4ed8', '37, 99, 235', this)">
+                                            <span class="palette-swatch" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"></span>
+                                            <div class="lh-1">
+                                                <strong class="d-block text-white" style="font-size: 0.78rem;">Azul Royal</strong>
+                                                <small class="text-secondary" style="font-size: 0.66rem;">Barber Pole</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <div class="palette-option" data-tema="copper" onclick="selecionarPaletaInstalador('copper', '#ea580c', '#f97316', '#c2410c', '234, 88, 12', this)">
+                                            <span class="palette-swatch" style="background: linear-gradient(135deg, #f97316, #c2410c);"></span>
+                                            <div class="lh-1">
+                                                <strong class="d-block text-white" style="font-size: 0.78rem;">Cobre Rústico</strong>
+                                                <small class="text-secondary" style="font-size: 0.66rem;">Amadeirado</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <div class="palette-option" data-tema="purple" onclick="selecionarPaletaInstalador('purple', '#7c3aed', '#8b5cf6', '#6d28d9', '124, 58, 237', this)">
+                                            <span class="palette-swatch" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"></span>
+                                            <div class="lh-1">
+                                                <strong class="d-block text-white" style="font-size: 0.78rem;">Roxo Urban</strong>
+                                                <small class="text-secondary" style="font-size: 0.66rem;">Moderno</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="col-12 mt-2">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="modo_producao" onchange="alternarModoProducao(this.checked)">
@@ -467,6 +559,72 @@ if (file_exists($configDir . '/db_credentials.php')) {
 
 <script>
 let conexaoValidada = false;
+let corDestaqueInstalador = '#ef4444';
+
+function selecionarPaletaInstalador(slug, primary, light, dark, rgb, el) {
+    document.getElementById('cor_tema').value = slug;
+    corDestaqueInstalador = light;
+
+    document.querySelectorAll('.palette-option').forEach(opt => {
+        opt.classList.remove('active');
+        opt.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+    });
+    if (el) {
+        el.classList.add('active');
+        el.style.borderColor = light;
+    }
+
+    document.documentElement.style.setProperty('--red-primary', primary);
+    document.documentElement.style.setProperty('--red-hover', dark);
+    document.documentElement.style.setProperty('--gold-accent', light);
+
+    const iconCircle = document.getElementById('installerIconCircle');
+    const iconScissors = document.getElementById('installerIconScissors');
+    const highlight = document.getElementById('installerHeaderHighlight');
+    if (iconCircle) {
+        iconCircle.style.background = `rgba(${rgb}, 0.15)`;
+        iconCircle.style.borderColor = primary;
+    }
+    if (iconScissors) {
+        iconScissors.style.color = light;
+    }
+    if (highlight) {
+        highlight.style.color = light;
+    }
+}
+
+function atualizarPreviewNomeInstalador(valor) {
+    const headerTitle = document.getElementById('installerHeaderTitle');
+    if (!headerTitle) return;
+
+    let limpo = (valor || '').trim();
+    if (!limpo) limpo = 'Corte na Navalha';
+
+    const matchBarb = limpo.match(/^(\S+\s+\S+.*)\s+barbearia$/i);
+    if (matchBarb) {
+        limpo = matchBarb[1].trim();
+    }
+
+    const partes = limpo.split(/\s+/);
+    if (partes.length > 1) {
+        const ultima = partes.pop();
+        const inicio = partes.join(' ');
+        headerTitle.innerHTML = '';
+        headerTitle.appendChild(document.createTextNode(inicio + ' '));
+        const span = document.createElement('span');
+        span.id = 'installerHeaderHighlight';
+        span.style.color = corDestaqueInstalador;
+        span.textContent = ultima;
+        headerTitle.appendChild(span);
+    } else {
+        headerTitle.innerHTML = '';
+        const span = document.createElement('span');
+        span.id = 'installerHeaderHighlight';
+        span.style.color = corDestaqueInstalador;
+        span.textContent = partes[0];
+        headerTitle.appendChild(span);
+    }
+}
 
 function alternarModoProducao(ativo) {
     const bloco = document.getElementById('blocoCadastroDonoProducao');
@@ -678,6 +836,7 @@ async function executarMigracaoCompleta() {
         db_pass: document.getElementById('db_pass').value,
         nome_barbearia: document.getElementById('nome_barbearia').value.trim(),
         chave_pix: document.getElementById('chave_pix').value.trim(),
+        cor_tema: document.getElementById('cor_tema').value.trim() || 'crimson',
         modo_producao: modoProducaoAtivo,
         dono_nome: document.getElementById('dono_nome').value.trim(),
         dono_email: document.getElementById('dono_email').value.trim(),
