@@ -14,13 +14,18 @@ if (!headers_sent() && php_sapi_name() !== 'cli') {
     header('Content-Type: text/html; charset=UTF-8');
 }
 
-// Constantes de conexão
-define('DB_HOST', 'localhost');
-define('DB_PORT', '3306');
-define('DB_NAME', 'corte_na_navalha');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');
+// Carrega credenciais geradas pelo instalador (/install), caso existam
+if (file_exists(__DIR__ . '/db_credentials.php')) {
+    require_once __DIR__ . '/db_credentials.php';
+}
+
+// Constantes de conexão (Fallback padrão para XAMPP caso ainda não configurado pelo /install)
+if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
+if (!defined('DB_PORT')) define('DB_PORT', '3306');
+if (!defined('DB_NAME')) define('DB_NAME', 'corte_na_navalha');
+if (!defined('DB_USER')) define('DB_USER', 'root');
+if (!defined('DB_PASS')) define('DB_PASS', '');
+if (!defined('DB_CHARSET')) define('DB_CHARSET', 'utf8mb4');
 
 // PALAVRA-CHAVE CONFORME MODS.MD: ACABOUOTESTE
 // Defina como true quando o projeto for para produção para remover todos os atalhos de teste
@@ -84,6 +89,27 @@ if (!defined('BASE_URL')) {
 }
 
 /**
+ * Redireciona automaticamente para o assistente de instalação (/install)
+ * caso a pasta exista e o banco ainda não esteja conectado/migrado.
+ */
+function redirecionarParaInstaladorSeDisponivel() {
+    $installFile = __DIR__ . '/../install/index.php';
+    if (file_exists($installFile) && php_sapi_name() !== 'cli') {
+        $scriptAtual = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        if (strpos($scriptAtual, '/install/') === false) {
+            $urlInstalador = BASE_URL . '/install/index.php';
+            if (!headers_sent()) {
+                header('Location: ' . $urlInstalador);
+                exit;
+            } else {
+                echo "<script>window.location.href = " . json_encode($urlInstalador) . ";</script>";
+                exit;
+            }
+        }
+    }
+}
+
+/**
  * Retorna a conexão PDO com o MySQL
  * @return PDO
  */
@@ -102,26 +128,22 @@ function getDBConnection() {
 
         try {
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        } catch (PDOException $e) {
-            // Se o banco ainda não existir, tenta criar automaticamente
-            try {
-                $pdoRoot = new PDO("mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=" . DB_CHARSET, DB_USER, DB_PASS, $options);
-                $pdoRoot->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-                
-                $sqlPath = __DIR__ . '/../database/schema.sql';
-                if (file_exists($sqlPath)) {
-                    $sqlContent = file_get_contents($sqlPath);
-                    $pdoRoot->exec("USE `" . DB_NAME . "`; " . $sqlContent);
-                }
-                
-                $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-            } catch (Exception $ex) {
-                die("<div style='font-family:sans-serif; background:#1c1917; color:#f87171; padding:25px; border-radius:8px; margin:40px auto; max-width:600px; border:1px solid #7f1d1d;'>
-                    <h3 style='margin-top:0;'>Erro de Conexão com o Banco de Dados</h3>
-                    <p>Não foi possível conectar ao MySQL do XAMPP: " . htmlspecialchars($ex->getMessage()) . "</p>
-                    <p style='color:#cbd5e1;'>Certifique-se de que o MySQL está iniciado no painel de controle do XAMPP.</p>
-                </div>");
+            
+            // Verifica se as tabelas principais já foram migradas no banco
+            $checkTable = $pdo->query("SHOW TABLES LIKE 'configuracao_empresa'");
+            if ($checkTable->rowCount() === 0) {
+                redirecionarParaInstaladorSeDisponivel();
             }
+        } catch (PDOException $e) {
+            // Se a pasta /install existir, redireciona o aluno direto para o Assistente de Instalação
+            redirecionarParaInstaladorSeDisponivel();
+
+            // Fallback caso a pasta /install já tenha sido removida
+            die("<div style='font-family:sans-serif; background:#111319; color:#f87171; padding:28px; border-radius:10px; margin:50px auto; max-width:620px; border:1px solid #dc2626; box-shadow:0 10px 30px rgba(0,0,0,0.5);'>
+                <h3 style='margin-top:0; color:#ffffff;'>⚠️ Erro de Conexão com o Banco de Dados</h3>
+                <p style='line-height:1.5;'>Não foi possível conectar ao servidor MySQL: <strong>" . htmlspecialchars($e->getMessage()) . "</strong></p>
+                <p style='color:#94a3b8; font-size:0.9rem; margin-bottom:0;'>Verifique se o serviço MySQL está ativo ou confira as credenciais em <code>config/db_credentials.php</code>.</p>
+            </div>");
         }
     }
 

@@ -100,6 +100,7 @@ navalha/
 ├── config/                   # Conexão PDO MySQL e configurações globais (db.php)
 ├── database/                 # Scripts de migração automática e atualização de schema
 ├── includes/                 # Componentes reutilizáveis (Header, Navbar, Modais, PIX, Balcão)
+├── install/                  # Assistente interativo de instalação (Setup Wizard para novos hosts)
 ├── recepcao/                 # Painel de Atendimento e Caixa da Recepção
 ├── sql/                      # Script SQL completo de criação e seed inicial (schema.sql)
 ├── cadastro.php              # Cadastro completo de clientes
@@ -111,38 +112,27 @@ navalha/
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 🚀 Como Executar o Projeto (Com Instalador Automático `/install`)
 
 ### Pré-requisitos
-- **XAMPP**, **WAMP**, **Laragon** ou ambiente equivalente com:
+- Qualquer hospedagem web (Hostinger, cPanel, InfinityFree, Locaweb) ou ambiente local (**XAMPP**, **WAMP**, **Laragon**) com:
   - **PHP 8.0+** (com extensão `pdo_mysql` habilitada)
   - **MySQL 5.7+ / 8.0+** ou **MariaDB**
-  - **Servidor Apache**
+  - **Servidor Apache / Nginx**
 
-### Passo a Passo
+### Opção 1: Instalação Interativa via Assistente Web (Recomendado para Alunos e Hospedagens)
 
-1. **Clone o repositório na pasta do seu servidor web:**
-   ```bash
-   git clone https://github.com/ColegioNesc/corte-na-navalha.git
-   ```
-   *(No XAMPP, posicione dentro de `C:\xampp\htdocs\...`)*
+1. **Suba os arquivos do projeto** para a pasta pública do seu servidor (`public_html` na hospedagem ou `htdocs` no XAMPP).
+2. **Acesse o endereço do site no navegador pela primeira vez:**
+   - Ao identificar que o banco de dados ainda não está conectado ou migrado, o sistema **redirecionará automaticamente** para o assistente **`/install/index.php`**.
+3. **Siga os 4 passos na tela:**
+   - **Passo 1 (Diagnóstico):** Valida a versão do PHP, extensões `PDO`/`MySQL` e permissão de escrita em `config/`.
+   - **Passo 2 (Banco do Host):** Informe o `Host`, `Porta`, `Nome do Banco`, `Usuário` e `Senha` do seu servidor e clique em **"1º Testar Conexão"**. O botão de avanço é liberado assim que a conexão for validada.
+   - **Passo 3 (Migração SQL):** Cria automaticamente todas as **11 tabelas**, aplica as colunas de atualização e importa os dados e usuários iniciais, gravando o arquivo `config/db_credentials.php`.
+   - **Passo 4 (Finalização Segura):** Clique em **"Remover Pasta /install e Iniciar o Sistema"** — o assistente exclui a pasta `/install` do servidor por segurança e abre a página inicial pronta para uso!
 
-2. **Configure o Banco de Dados:**
-   - Inicie os módulos **Apache** e **MySQL** no painel do XAMPP.
-   - Acesse o **phpMyAdmin** (`http://localhost/phpmyadmin`) ou utilize o terminal MySQL.
-   - Importe o arquivo [`sql/schema.sql`](sql/schema.sql), que criará automaticamente o banco `corte_na_navalha`, todas as tabelas e os usuários iniciais de demonstração.
-   - Caso esteja atualizando uma base existente, execute a migração complementar:
-     ```bash
-     php database/migracao_cancelamento.php
-     ```
-
-3. **Verifique a conexão em `config/db.php`:**
-   - Por padrão, o sistema conecta em `localhost`, banco `corte_na_navalha`, usuário `root` e senha vazia `""` (padrão XAMPP). Ajuste a constante `BASE_URL` se o caminho da pasta local for diferente.
-
-4. **Acesse no navegador:**
-   ```text
-   http://localhost/nesc/navalha/
-   ```
+### Opção 2: Importação Manual via SQL (Opcional)
+- Caso prefira importar manualmente via **phpMyAdmin**, basta executar o arquivo [`sql/schema.sql`](sql/schema.sql) e ajustar as credenciais em `config/db.php` (ou `config/db_credentials.php`).
 
 ---
 
@@ -162,5 +152,5 @@ Na tela de login (`login.php`), você pode utilizar os botões de **Acesso Rápi
 ---
 
 <div align="center">
-  Desenvolvido com dedicação para a <strong>Barbearia Corte na Navalha</strong> 💈✂️
+  Desenvolvido com dedicação para a <strong>Barbearia Corte na Navalha</strong> 💈✂️ 
 </div>
