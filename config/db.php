@@ -127,7 +127,17 @@ function getDBConnection() {
         ];
 
         try {
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            try {
+                $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            } catch (PDOException $eSocket) {
+                // Se o host for 'localhost' e o socket Unix falhar (erro 2002), tenta via TCP 127.0.0.1
+                if (strtolower(DB_HOST) === 'localhost' && strpos($eSocket->getMessage(), '2002') !== false) {
+                    $dsnTcp = "mysql:host=127.0.0.1;port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+                    $pdo = new PDO($dsnTcp, DB_USER, DB_PASS, $options);
+                } else {
+                    throw $eSocket;
+                }
+            }
             
             // Verifica se as tabelas principais já foram migradas no banco
             $checkTable = $pdo->query("SHOW TABLES LIKE 'configuracao_empresa'");
@@ -138,11 +148,22 @@ function getDBConnection() {
             // Se a pasta /install existir, redireciona o aluno direto para o Assistente de Instalação
             redirecionarParaInstaladorSeDisponivel();
 
-            // Fallback caso a pasta /install já tenha sido removida
+            // Traduz o erro para linguagem amigável caso a pasta /install já tenha sido removida
+            $msgOriginal = $e->getMessage();
+            if (strpos($msgOriginal, '1045') !== false) {
+                $motivoAmigavel = "O usuário ou a senha do banco de dados estão incorretos.";
+            } elseif (strpos($msgOriginal, '1049') !== false) {
+                $motivoAmigavel = "O banco de dados '<strong>" . htmlspecialchars(DB_NAME) . "</strong>' não foi encontrado no servidor.";
+            } elseif (strpos($msgOriginal, '2002') !== false) {
+                $motivoAmigavel = "O servidor MySQL parece estar desligado ou o endereço do Host ('<strong>" . htmlspecialchars(DB_HOST) . "</strong>') está indisponível.";
+            } else {
+                $motivoAmigavel = "Não foi possível estabelecer comunicação com o servidor de banco de dados.";
+            }
+
             die("<div style='font-family:sans-serif; background:#111319; color:#f87171; padding:28px; border-radius:10px; margin:50px auto; max-width:620px; border:1px solid #dc2626; box-shadow:0 10px 30px rgba(0,0,0,0.5);'>
-                <h3 style='margin-top:0; color:#ffffff;'>⚠️ Erro de Conexão com o Banco de Dados</h3>
-                <p style='line-height:1.5;'>Não foi possível conectar ao servidor MySQL: <strong>" . htmlspecialchars($e->getMessage()) . "</strong></p>
-                <p style='color:#94a3b8; font-size:0.9rem; margin-bottom:0;'>Verifique se o serviço MySQL está ativo ou confira as credenciais em <code>config/db_credentials.php</code>.</p>
+                <h3 style='margin-top:0; color:#ffffff;'>⚠️ Banco de Dados Indisponível</h3>
+                <p style='line-height:1.5; color:#f1f5f9;'>{$motivoAmigavel}</p>
+                <p style='color:#94a3b8; font-size:0.9rem; margin-bottom:0;'>Dica: se estiver no computador local (XAMPP), verifique se o módulo <strong>MySQL</strong> está iniciado. Em hospedagem online, confira os dados em <code>config/db_credentials.php</code>.</p>
             </div>");
         }
     }

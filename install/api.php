@@ -20,38 +20,103 @@ if (!is_array($data)) {
 $acao = trim($data['acao'] ?? $_GET['acao'] ?? '');
 
 /**
- * Conecta ao banco do host (ou cria a base caso o usuário tenha permissão)
+ * Traduz erros técnicos do PDO/MySQL (SQLSTATE) para mensagens claras e didáticas para os alunos
+ */
+function traduzirErroBancoAmigavel(Exception $e, string $host, string $dbname, string $user): string {
+    $msg = $e->getMessage();
+
+    // 1. Erro 1045: Usuário ou senha incorretos
+    if (strpos($msg, '1045') !== false || stripos($msg, 'Access denied for user') !== false) {
+        if (stripos($msg, 'to database') !== false) {
+            return "O usuário '{$user}' não tem permissão para acessar ou criar o banco '{$dbname}'. No painel da sua hospedagem, verifique se você criou o banco de dados com esse nome exato (incluindo o prefixo do host) e vinculou o usuário a ele.";
+        }
+        return "Usuário ou Senha do MySQL incorretos para o usuário '{$user}'. Confira se digitou exatamente como cadastrado no painel da hospedagem (dica: no XAMPP local, o usuário é 'root' e a senha deve ficar vazia).";
+    }
+
+    // 2. Erro 1049 / 1044: Banco de dados não existe e sem permissão de criar
+    if (strpos($msg, '1049') !== false || strpos($msg, '1044') !== false || stripos($msg, 'Unknown database') !== false) {
+        return "O banco de dados '{$dbname}' não foi encontrado no servidor. Se estiver em uma hospedagem online (Hostinger, cPanel, InfinityFree), primeiro crie o banco lá no painel do host e copie o nome completo gerado (ex: u123456_{$dbname}).";
+    }
+
+    // 3. Endereço de host inválido / DNS não encontrado
+    if (stripos($msg, 'getaddrinfo') !== false || stripos($msg, 'Name or service not known') !== false || stripos($msg, 'Unknown MySQL server host') !== false) {
+        return "O endereço do servidor (Host: '{$host}') não foi encontrado. Verifique se digitou o endereço do Host MySQL corretamente sem espaços extras.";
+    }
+
+    // 4. Erro 2002: Servidor desligado, porta incorreta ou socket indisponível
+    if (strpos($msg, '2002') !== false || stripos($msg, 'No such file or directory') !== false || stripos($msg, 'Connection refused') !== false || stripos($msg, 'recusou') !== false) {
+        if (in_array(strtolower($host), ['localhost', '127.0.0.1'])) {
+            return "Não foi possível conectar ao MySQL local. Se você está usando o XAMPP/WAMP, abra o painel de controle e clique em 'Start' no MySQL. Se você está em uma hospedagem online, troque 'localhost' pelo endereço do Host MySQL informado no painel da sua hospedagem (ou tente usar 127.0.0.1).";
+        }
+        return "O servidor '{$host}' recusou a conexão. Verifique se o endereço do Host e a Porta (padrão 3306) estão corretos no painel da sua hospedagem.";
+    }
+
+    // 5. Timeout
+    if (stripos($msg, 'timed out') !== false || strpos($msg, '2006') !== false) {
+        return "O servidor MySQL ('{$host}') demorou muito para responder. Confira se o Host e a Porta informados estão corretos e se o banco aceita conexões.";
+    }
+
+    return "Não foi possível completar a operação no banco de dados. Verifique os dados informados (Host, Nome do Banco, Usuário e Senha).";
+}
+
+/**
+ * Conecta ao banco do host (com fallback inteligente de localhost -> 127.0.0.1
+ * e criação automática da base caso o usuário tenha permissão)
  */
 function conectarBancoInstalacao(string $host, string $port, string $dbname, string $user, string $pass): array {
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => true, // Permite múltiplos statements e flexibilidade de migração
+        PDO::ATTR_EMULATE_PREPARES   => true,
         PDO::ATTR_TIMEOUT            => 8
     ];
 
     $dbnameLimpo = preg_replace('/[^a-zA-Z0-9_\-]/', '', $dbname);
     if (empty($dbnameLimpo)) {
-        throw new Exception('O nome do banco de dados informado é inválido.');
+        throw new Exception('O nome do banco de dados informado é inválido. Use apenas letras, números e underline (_).');
     }
 
     $bancoCriadoAgora = false;
+    $hostEfetivo = $host;
 
-    try {
-        // 1. Tenta conectar diretamente ao banco informado (padrão de hospedagens como Hostinger/cPanel)
-        $dsn = "mysql:host={$host};port={$port};dbname={$dbnameLimpo};charset=utf8mb4";
-        $pdo = new PDO($dsn, $user, $pass, $options);
-    } catch (PDOException $e) {
-        // 2. Se o erro for banco inexistente (1049), tenta conectar sem dbname e criar o banco
-        if (strpos($e->getMessage(), '1049') !== false || stripos($e->getMessage(), 'Unknown database') !== false) {
-            $dsnSemBanco = "mysql:host={$host};port={$port};charset=utf8mb4";
-            $pdo = new PDO($dsnSemBanco, $user, $pass, $options);
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbnameLimpo}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            $pdo->exec("USE `{$dbnameLimpo}`");
-            $bancoCriadoAgora = true;
-        } else {
-            throw $e;
+    // Lista de hosts para tentar (se o aluno colocou 'localhost' e o socket Unix falhar com erro 2002, tenta via TCP '127.0.0.1' automaticamente)
+    $hostsParaTentar = [$host];
+    if (strtolower($host) === 'localhost') {
+        $hostsParaTentar[] = '127.0.0.1';
+    }
+
+    $ultimoErro = null;
+    $pdo = null;
+
+    foreach ($hostsParaTentar as $hTentativa) {
+        try {
+            // 1. Tenta conectar diretamente ao banco informado
+            $dsn = "mysql:host={$hTentativa};port={$port};dbname={$dbnameLimpo};charset=utf8mb4";
+            $pdo = new PDO($dsn, $user, $pass, $options);
+            $hostEfetivo = $hTentativa;
+            break;
+        } catch (PDOException $e) {
+            // 2. Se o erro for banco inexistente (1049), tenta conectar sem dbname e criar o banco
+            if (strpos($e->getMessage(), '1049') !== false || stripos($e->getMessage(), 'Unknown database') !== false) {
+                try {
+                    $dsnSemBanco = "mysql:host={$hTentativa};port={$port};charset=utf8mb4";
+                    $pdo = new PDO($dsnSemBanco, $user, $pass, $options);
+                    $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbnameLimpo}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                    $pdo->exec("USE `{$dbnameLimpo}`");
+                    $bancoCriadoAgora = true;
+                    $hostEfetivo = $hTentativa;
+                    break;
+                } catch (PDOException $eCreate) {
+                    $ultimoErro = $eCreate;
+                }
+            } else {
+                $ultimoErro = $e;
+            }
         }
+    }
+
+    if (!$pdo) {
+        throw new Exception(traduzirErroBancoAmigavel($ultimoErro ?? new Exception('Erro desconhecido'), $host, $dbnameLimpo, $user));
     }
 
     $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
@@ -60,6 +125,7 @@ function conectarBancoInstalacao(string $host, string $port, string $dbname, str
 
     return [
         'pdo'                => $pdo,
+        'host_efetivo'       => $hostEfetivo,
         'dbname'             => $dbnameLimpo,
         'versao_mysql'       => $versao,
         'banco_criado_agora' => $bancoCriadoAgora,
@@ -206,12 +272,13 @@ if ($acao === 'testar_conexao') {
             'success'       => true,
             'message'       => "Conexão estabelecida com sucesso! {$msgExtra}",
             'mysql_version' => $info['versao_mysql'],
-            'total_tabelas' => $info['total_tabelas']
+            'total_tabelas' => $info['total_tabelas'],
+            'host_efetivo'  => $info['host_efetivo']
         ]);
     } catch (Exception $e) {
         echo json_encode([
             'success' => false,
-            'message' => 'Falha ao conectar no MySQL: ' . $e->getMessage()
+            'message' => $e->getMessage()
         ]);
     }
     exit;
@@ -238,6 +305,7 @@ if ($acao === 'executar_instalacao') {
         /** @var PDO $pdo */
         $pdo = $info['pdo'];
         $dbnameLimpo = $info['dbname'];
+        $hostParaSalvar = $info['host_efetivo'] ?? $host;
         $logs[] = "Conectado ao servidor MySQL ({$info['versao_mysql']}) na base '{$dbnameLimpo}'.";
 
         // 2. Executar o arquivo principal sql/schema.sql
@@ -274,7 +342,7 @@ if ($acao === 'executar_instalacao') {
             . " * Credenciais de Banco de Dados geradas pelo Assistente de Instalação (/install)\n"
             . " * Data da instalação: " . date('d/m/Y H:i:s') . "\n"
             . " */\n\n"
-            . "define('DB_HOST', " . var_export($host, true) . ");\n"
+            . "define('DB_HOST', " . var_export($hostParaSalvar, true) . ");\n"
             . "define('DB_PORT', " . var_export($port, true) . ");\n"
             . "define('DB_NAME', " . var_export($dbnameLimpo, true) . ");\n"
             . "define('DB_USER', " . var_export($user, true) . ");\n"
