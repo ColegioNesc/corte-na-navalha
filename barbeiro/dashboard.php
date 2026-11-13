@@ -441,21 +441,48 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="hidden" name="redirect" value="<?= BASE_URL ?>/barbeiro/dashboard.php">
                 
                 <div class="modal-body py-3">
-                    <p class="text-white mb-2">
-                        Cliente: <strong id="barbCancCliente"></strong><br>
-                        Reserva: <strong id="barbCancCodigo" class="text-gold font-monospace"></strong>
-                    </p>
-                    <div class="alert alert-info py-2 small mb-3">
-                        <i class="bi bi-info-circle me-1"></i> Como o cancelamento está sendo feito pelo barbeiro/equipe, o cliente é 100% isento e terá estorno total.
+                    <div id="barbCancEtapa1">
+                        <p class="text-white mb-2">
+                            Cliente: <strong id="barbCancCliente"></strong><br>
+                            Reserva: <strong id="barbCancCodigo" class="text-gold font-monospace"></strong>
+                        </p>
+                        <div class="alert alert-info py-2 small mb-3">
+                            <i class="bi bi-info-circle me-1"></i> Como o cancelamento está sendo feito pelo barbeiro/equipe, o cliente é 100% isento e terá estorno total.
+                        </div>
+                        <div class="mb-3">
+                            <label for="barbMotivo" class="form-label small text-secondary">Motivo do Cancelamento</label>
+                            <textarea class="form-control form-control-sm" name="motivo_cancelamento" id="barbMotivo" rows="2" placeholder="Ex: Imprevisto de força maior, reagendado..." required></textarea>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="barbMotivo" class="form-label small text-secondary">Motivo do Cancelamento</label>
-                        <textarea class="form-control form-control-sm" name="motivo_cancelamento" id="barbMotivo" rows="2" placeholder="Ex: Imprevisto de força maior, reagendado..." required></textarea>
+
+                    <div id="barbCancEtapa2" style="display: none;">
+                        <div class="alert alert-danger border-danger bg-danger bg-opacity-10 text-white mb-0">
+                            <div class="d-flex align-items-center gap-2 fw-bold text-danger mb-2">
+                                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                                <span>Confirmação de Cancelamento (Etapa 2 de 2)</span>
+                            </div>
+                            <p class="small mb-2">
+                                Tem certeza que deseja cancelar o atendimento de <strong id="barbCancClienteConfirma" class="text-white"></strong> (<strong id="barbCancCodigoConfirma" class="text-gold font-monospace"></strong>)?
+                            </p>
+                            <p class="small text-secondary mb-0">
+                                Após confirmado, apenas o proprietário poderá reverter este cancelamento.
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" id="barbCancFooter1">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-bold">Confirmar Cancelamento</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm fw-bold" onclick="avancarEtapaCancelarBarbeiro(true)">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Prosseguir para Confirmação
+                    </button>
+                </div>
+                <div class="modal-footer" id="barbCancFooter2" style="display: none;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="avancarEtapaCancelarBarbeiro(false)">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    </button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-bold">
+                        <i class="bi bi-x-circle me-1"></i> Sim, Confirmar Cancelamento
+                    </button>
                 </div>
             </form>
         </div>
@@ -472,10 +499,28 @@ function filtrarAgendaBarbeiro() {
     });
 }
 
+function avancarEtapaCancelarBarbeiro(irParaEtapa2) {
+    if (irParaEtapa2) {
+        const motivoEl = document.getElementById('barbMotivo');
+        if (!motivoEl.value.trim()) {
+            motivoEl.focus();
+            motivoEl.reportValidity();
+            return;
+        }
+    }
+    document.getElementById('barbCancEtapa1').style.display = irParaEtapa2 ? 'none' : 'block';
+    document.getElementById('barbCancFooter1').style.display = irParaEtapa2 ? 'none' : 'flex';
+    document.getElementById('barbCancEtapa2').style.display = irParaEtapa2 ? 'block' : 'none';
+    document.getElementById('barbCancFooter2').style.display = irParaEtapa2 ? 'flex' : 'none';
+}
+
 function abrirModalCancelarBarbeiro(ag) {
+    avancarEtapaCancelarBarbeiro(false);
     document.getElementById('barbCancId').value = ag.id;
     document.getElementById('barbCancCliente').innerText = ag.cliente_nome;
     document.getElementById('barbCancCodigo').innerText = ag.codigo_reserva;
+    document.getElementById('barbCancClienteConfirma').innerText = ag.cliente_nome;
+    document.getElementById('barbCancCodigoConfirma').innerText = '#' + ag.codigo_reserva;
     document.getElementById('barbMotivo').value = '';
     const modal = new bootstrap.Modal(document.getElementById('modalCancelarBarbeiro'));
     modal.show();

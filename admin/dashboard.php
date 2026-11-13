@@ -257,6 +257,10 @@ require_once __DIR__ . '/../includes/header.php';
                                                 <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 fw-semibold" title="Cancelar Agendamento" onclick='abrirModalCancelarDono(<?= json_encode($rec) ?>)'>
                                                     <i class="bi bi-x-circle me-1"></i> Cancelar
                                                 </button>
+                                            <?php else: ?>
+                                                <button type="button" class="btn btn-sm btn-outline-warning py-1 px-2 fw-semibold" title="Reverter Cancelamento (Exclusivo do Dono)" onclick='abrirModalReverterDono(<?= json_encode($rec) ?>)'>
+                                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reverter
+                                                </button>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -555,11 +559,12 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="hidden" name="isentar_taxa" id="donoHiddenIsentar" value="0">
                 
                 <div class="modal-body py-3">
-                    <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 mb-3">
-                        <span class="text-secondary small d-block">Cliente: <strong id="donoCancCliente" class="text-white"></strong></span>
-                        <span class="text-secondary small d-block">Reserva: <strong id="donoCancCodigo" class="text-gold font-monospace"></strong></span>
-                        <span class="text-secondary small d-block">Valor Total: <strong id="donoCancValor" class="text-gold"></strong></span>
-                    </div>
+                    <div id="donoCancEtapa1">
+                        <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 mb-3">
+                            <span class="text-secondary small d-block">Cliente: <strong id="donoCancCliente" class="text-white"></strong></span>
+                            <span class="text-secondary small d-block">Reserva: <strong id="donoCancCodigo" class="text-gold font-monospace"></strong></span>
+                            <span class="text-secondary small d-block">Valor Total: <strong id="donoCancValor" class="text-gold"></strong></span>
+                        </div>
 
                     <!-- Alerta de Isenção para Agendamentos de Balcão -->
                     <div id="donoAlertaBalcaoIsento" class="alert alert-success py-2 small mb-3" style="display: none;">
@@ -612,15 +617,71 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="donoMotivo" class="form-label small text-secondary">Motivo do Cancelamento</label>
-                        <textarea class="form-control form-control-sm" name="motivo_cancelamento" id="donoMotivo" rows="2" placeholder="Ex: Cancelamento solicitado pelo cliente..." required></textarea>
+                        <div class="mb-3">
+                            <label for="donoMotivo" class="form-label small text-secondary">Motivo do Cancelamento</label>
+                            <textarea class="form-control form-control-sm" name="motivo_cancelamento" id="donoMotivo" rows="2" placeholder="Ex: Cancelamento solicitado pelo cliente..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div id="donoCancEtapa2" style="display: none;">
+                        <div class="alert alert-danger border-danger bg-danger bg-opacity-10 text-white mb-0">
+                            <div class="d-flex align-items-center gap-2 fw-bold text-danger mb-2">
+                                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                                <span>Confirmação de Cancelamento (Etapa 2 de 2)</span>
+                            </div>
+                            <p class="small mb-2">
+                                Tem certeza que deseja cancelar o agendamento de <strong id="donoCancClienteConfirma" class="text-white"></strong> (<strong id="donoCancCodigoConfirma" class="text-gold font-monospace"></strong>)?
+                            </p>
+                            <p class="small text-secondary mb-0">
+                                Caso precise desfazer depois, você poderá reverter o cancelamento diretamente nesta tabela.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="donoCancFooter1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm fw-bold" onclick="avancarEtapaCancelarDono(true)">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Prosseguir para Confirmação
+                    </button>
+                </div>
+                <div class="modal-footer" id="donoCancFooter2" style="display: none;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="avancarEtapaCancelarDono(false)">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    </button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-bold">
+                        <i class="bi bi-x-circle me-1"></i> Sim, Confirmar Cancelamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Reversão de Cancelamento (Exclusivo do Dono) -->
+<div class="modal fade" id="modalReverterDono" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content barber-card">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title brand-font text-warning"><i class="bi bi-arrow-counterclockwise me-2"></i>Reverter Cancelamento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form action="<?= BASE_URL ?>/actions/agendamento_reverter.php" method="POST">
+                <input type="hidden" name="agendamento_id" id="donoRevId" value="">
+                <input type="hidden" name="redirect" value="<?= BASE_URL ?>/admin/dashboard.php">
+                <div class="modal-body py-3">
+                    <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 mb-3">
+                        <span class="text-secondary small d-block">Cliente: <strong id="donoRevCliente" class="text-white"></strong></span>
+                        <span class="text-secondary small d-block">Reserva: <strong id="donoRevCodigo" class="text-gold font-monospace"></strong></span>
+                    </div>
+                    <div class="alert alert-warning border-warning bg-warning bg-opacity-10 text-white small mb-0">
+                        <i class="bi bi-shield-lock me-1 text-warning"></i>
+                        <strong>Ação Exclusiva do Dono:</strong> Ao reverter, o agendamento voltará ao status <strong>Agendado</strong>, as taxas de cancelamento registradas serão zeradas e eventuais estornos lançados serão anulados.
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-bold">
-                        <i class="bi bi-x-circle me-1"></i> Confirmar Cancelamento
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Voltar</button>
+                    <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Confirmar Reversão
                     </button>
                 </div>
             </form>
@@ -640,10 +701,37 @@ function filtrarAtendimentosRecentes() {
     });
 }
 
+function avancarEtapaCancelarDono(irParaEtapa2) {
+    if (irParaEtapa2) {
+        const motivoEl = document.getElementById('donoMotivo');
+        if (!motivoEl.value.trim()) {
+            motivoEl.focus();
+            motivoEl.reportValidity();
+            return;
+        }
+    }
+    document.getElementById('donoCancEtapa1').style.display = irParaEtapa2 ? 'none' : 'block';
+    document.getElementById('donoCancFooter1').style.display = irParaEtapa2 ? 'none' : 'flex';
+    document.getElementById('donoCancEtapa2').style.display = irParaEtapa2 ? 'block' : 'none';
+    document.getElementById('donoCancFooter2').style.display = irParaEtapa2 ? 'flex' : 'none';
+}
+
+function abrirModalReverterDono(rec) {
+    document.getElementById('donoRevId').value = rec.id;
+    document.getElementById('donoRevCliente').innerText = rec.cliente_nome_avulso || rec.cliente_nome;
+    document.getElementById('donoRevCodigo').innerText = rec.codigo_reserva;
+    const modal = new bootstrap.Modal(document.getElementById('modalReverterDono'));
+    modal.show();
+}
+
 function abrirModalCancelarDono(rec) {
+    avancarEtapaCancelarDono(false);
     document.getElementById('donoCancId').value = rec.id;
-    document.getElementById('donoCancCliente').innerText = rec.cliente_nome_avulso || rec.cliente_nome;
+    const nomeCli = rec.cliente_nome_avulso || rec.cliente_nome;
+    document.getElementById('donoCancCliente').innerText = nomeCli;
     document.getElementById('donoCancCodigo').innerText = rec.codigo_reserva;
+    document.getElementById('donoCancClienteConfirma').innerText = nomeCli;
+    document.getElementById('donoCancCodigoConfirma').innerText = '#' + rec.codigo_reserva;
     
     valorTotalAgendamentoDonoAtual = parseFloat(rec.valor_total) || 0;
     document.getElementById('donoCancValor').innerText = 'R$ ' + valorTotalAgendamentoDonoAtual.toFixed(2).replace('.', ',');

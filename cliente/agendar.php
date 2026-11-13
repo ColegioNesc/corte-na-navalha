@@ -123,17 +123,17 @@ require_once __DIR__ . '/../includes/header.php';
                                     $isCheck = ($srv['id'] === $servicoPreSelecionado);
                                 ?>
                                 <div class="col-md-6 item-servico-col">
-                                    <div class="p-3 rounded border border-secondary border-opacity-25 h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico('global_<?= $srv['id'] ?>')">
+                                    <div class="p-3 rounded border <?= $isCheck ? 'border-danger bg-danger bg-opacity-10' : 'border-secondary border-opacity-25' ?> h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico('global_<?= $srv['id'] ?>')">
                                         <div class="form-check d-flex align-items-start gap-2">
                                             <input class="form-check-input mt-1 check-servico" type="checkbox" name="servicos[]" value="global_<?= $srv['id'] ?>" id="srv_global_<?= $srv['id'] ?>" data-preco="<?= $srv['preco'] ?>" data-tempo="<?= $srv['tempo_minutos'] ?>" data-nome="<?= htmlspecialchars($srv['nome']) ?>" <?= $isCheck ? 'checked' : '' ?> onclick="event.stopPropagation(); atualizarResumo();">
-                                            <label class="form-check-label w-100" for="srv_global_<?= $srv['id'] ?>" style="cursor: pointer;">
+                                            <div class="form-check-label w-100" style="cursor: pointer;">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <strong class="text-white item-servico-nome"><?= htmlspecialchars($srv['nome']) ?></strong>
                                                     <span class="text-danger fw-bold">R$ <?= number_format($srv['preco'], 2, ',', '.') ?></span>
                                                 </div>
                                                 <small class="text-secondary d-block mt-1 item-servico-desc"><?= htmlspecialchars($srv['descricao']) ?></small>
                                                 <small class="text-muted d-block mt-1"><i class="bi bi-clock me-1 text-danger"></i><?= $srv['tempo_minutos'] ?> min</small>
-                                            </label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -292,14 +292,14 @@ async function carregarServicosDoBarbeiro(barbeiroId) {
                     <div class="p-3 rounded border border-secondary border-opacity-25 h-100 card-servico-item" style="background: #111319; cursor: pointer;" onclick="toggleServico('${srv.id_input}')">
                         <div class="form-check d-flex align-items-start gap-2">
                             <input class="form-check-input mt-1 check-servico" type="checkbox" name="servicos[]" value="${srv.id_input}" id="srv_${srv.id_input}" data-preco="${srv.preco}" data-tempo="${srv.tempo_minutos}" data-nome="${srv.nome}" onclick="event.stopPropagation(); atualizarResumo();">
-                            <label class="form-check-label w-100" for="srv_${srv.id_input}" style="cursor: pointer;">
+                            <div class="form-check-label w-100" style="cursor: pointer;">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <strong class="text-white item-servico-nome">${srv.nome}</strong>
                                     <span class="text-danger fw-bold">R$ ${srv.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                                 </div>
                                 <small class="text-secondary d-block mt-1 item-servico-desc">${srv.descricao || ''}</small>
                                 <small class="text-muted d-block mt-1"><i class="bi bi-clock me-1 text-danger"></i>${srv.tempo_minutos} min</small>
-                            </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -313,6 +313,17 @@ async function carregarServicosDoBarbeiro(barbeiroId) {
 }
 
 function atualizarResumo() {
+    document.querySelectorAll('.card-servico-item').forEach(card => {
+        const chk = card.querySelector('.check-servico');
+        if (chk && chk.checked) {
+            card.classList.remove('border-secondary', 'border-opacity-25');
+            card.classList.add('border-danger', 'bg-danger', 'bg-opacity-10');
+        } else {
+            card.classList.remove('border-danger', 'bg-danger', 'bg-opacity-10');
+            card.classList.add('border-secondary', 'border-opacity-25');
+        }
+    });
+
     const checks = document.querySelectorAll('.check-servico:checked');
     const containerLista = document.getElementById('listaResumoServicos');
     let totalPreco = 0;

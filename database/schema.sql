@@ -18,6 +18,17 @@ CREATE TABLE IF NOT EXISTS `configuracao_empresa` (
     `horario_fechamento` TIME DEFAULT '20:00:00',
     `chave_pix_principal` VARCHAR(100) DEFAULT 'pix@cortenanavalha.com.br',
     `tipo_chave_pix` VARCHAR(30) DEFAULT 'E-mail',
+    `cor_tema` VARCHAR(30) DEFAULT 'crimson',
+    `tipo_catalogo` ENUM('global', 'individual') DEFAULT 'global',
+    `metodo_pagamento_ativo` ENUM('pix_fixo', 'mercadopago') DEFAULT 'pix_fixo',
+    `mp_public_key` VARCHAR(255) DEFAULT NULL,
+    `mp_access_token` TEXT DEFAULT NULL,
+    `mp_webhook_secret` VARCHAR(255) DEFAULT NULL,
+    `mp_sandbox` TINYINT(1) DEFAULT 1,
+    `comissao_automatica` TINYINT(1) DEFAULT 0,
+    `taxa_cancelamento_percentual` DECIMAL(5,2) DEFAULT 20.00,
+    `horas_minimas_cancelamento` INT DEFAULT 2,
+    `politica_cancelamento_texto` TEXT NULL,
     `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -35,6 +46,8 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `chave_pix` VARCHAR(100) DEFAULT NULL,
     `tipo_chave_pix` VARCHAR(30) DEFAULT NULL,
     `comissao_percentual` DECIMAL(5,2) DEFAULT 50.00,
+    `permite_catalogo_proprio` TINYINT(1) DEFAULT 0,
+    `permissoes` TEXT DEFAULT NULL,
     `ativo` TINYINT(1) DEFAULT 1,
     `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -52,6 +65,20 @@ CREATE TABLE IF NOT EXISTS `servicos` (
     `destaque` TINYINT(1) DEFAULT 0,
     `ativo` TINYINT(1) DEFAULT 1,
     `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3B. TABELA DE SERVIÇOS INDIVIDUAIS DOS BARBEIROS
+CREATE TABLE IF NOT EXISTS `barbeiro_servicos` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `barbeiro_id` INT NOT NULL,
+    `nome` VARCHAR(100) NOT NULL,
+    `descricao` TEXT DEFAULT NULL,
+    `preco` DECIMAL(10,2) NOT NULL,
+    `tempo_minutos` INT NOT NULL DEFAULT 30,
+    `categoria` ENUM('cabelo', 'barba', 'combo', 'especial') DEFAULT 'cabelo',
+    `ativo` TINYINT(1) DEFAULT 1,
+    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_barbeiro_servico` FOREIGN KEY (`barbeiro_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. TABELA DE AGENDAMENTOS
@@ -89,10 +116,13 @@ CREATE TABLE IF NOT EXISTS `agendamentos` (
 CREATE TABLE IF NOT EXISTS `agendamento_itens` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `agendamento_id` INT NOT NULL,
-    `servico_id` INT NOT NULL,
+    `servico_id` INT DEFAULT NULL,
+    `nome_servico` VARCHAR(150) DEFAULT NULL,
+    `barbeiro_servico_id` INT DEFAULT NULL,
     `preco_momento` DECIMAL(10,2) NOT NULL,
     CONSTRAINT `fk_item_agendamento` FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_item_servico` FOREIGN KEY (`servico_id`) REFERENCES `servicos` (`id`) ON DELETE RESTRICT
+    CONSTRAINT `fk_item_servico` FOREIGN KEY (`servico_id`) REFERENCES `servicos` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_item_barbeiro_servico` FOREIGN KEY (`barbeiro_servico_id`) REFERENCES `barbeiro_servicos` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. TABELA DE FEEDBACK E AVALIAÇÃO DOS CLIENTES
@@ -125,6 +155,56 @@ CREATE TABLE IF NOT EXISTS `pagamentos_funcionarios` (
     CONSTRAINT `fk_pagto_dono` FOREIGN KEY (`dono_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 8. TABELA DE TRANSAÇÕES FINANCEIRAS E COMPROVANTES
+CREATE TABLE IF NOT EXISTS `transacoes` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `codigo_transacao` VARCHAR(50) NOT NULL UNIQUE,
+    `agendamento_id` INT DEFAULT NULL,
+    `tipo` ENUM('recebimento', 'comissao', 'estorno') NOT NULL DEFAULT 'recebimento',
+    `metodo` ENUM('dinheiro', 'pix_fixo', 'mercadopago_pix', 'mercadopago_cartao', 'outro') NOT NULL DEFAULT 'dinheiro',
+    `valor_total` DECIMAL(10,2) NOT NULL,
+    `valor_recebido` DECIMAL(10,2) DEFAULT NULL,
+    `troco` DECIMAL(10,2) DEFAULT 0.00,
+    `taxa_retida` DECIMAL(10,2) DEFAULT 0.00,
+    `valor_liquido` DECIMAL(10,2) DEFAULT NULL,
+    `cliente_id` INT DEFAULT NULL,
+    `funcionario_id` INT DEFAULT NULL,
+    `operador_id` INT DEFAULT NULL,
+    `status` ENUM('concluida', 'pendente', 'cancelada') DEFAULT 'concluida',
+    `detalhes` TEXT DEFAULT NULL,
+    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_transacao_agendamento` FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transacao_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transacao_funcionario` FOREIGN KEY (`funcionario_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transacao_operador` FOREIGN KEY (`operador_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. TABELA DE CONFIGURAÇÃO DE E-MAIL (SMTP/GMAIL)
+CREATE TABLE IF NOT EXISTS `configuracao_email` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `driver` ENUM('smtp', 'gmail', 'mail') DEFAULT 'gmail',
+    `host` VARCHAR(150) DEFAULT 'smtp.gmail.com',
+    `porta` INT DEFAULT 587,
+    `seguranca` ENUM('tls', 'ssl', 'none') DEFAULT 'tls',
+    `usuario` VARCHAR(150) DEFAULT '',
+    `senha` VARCHAR(255) DEFAULT '',
+    `remetente_nome` VARCHAR(150) DEFAULT 'Corte na Navalha Barbearia',
+    `remetente_email` VARCHAR(150) DEFAULT 'contato@cortenanavalha.com.br',
+    `ativo` TINYINT(1) DEFAULT 0,
+    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. TABELA DE TEMPLATES DE E-MAIL FORMATÁVEIS
+CREATE TABLE IF NOT EXISTS `templates_email` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `slug` VARCHAR(50) NOT NULL UNIQUE,
+    `titulo` VARCHAR(100) NOT NULL,
+    `assunto` VARCHAR(200) NOT NULL,
+    `corpo_html` LONGTEXT NOT NULL,
+    `variaveis_disponiveis` VARCHAR(255) DEFAULT '',
+    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ========================================================
 -- DADOS INICIAIS DE EXEMPLO (SEMENTE)
 -- ========================================================
@@ -135,10 +215,6 @@ VALUES (1, 'Corte na Navalha Barbearia', 'Tradição clássica, navalha afiada e
 ON DUPLICATE KEY UPDATE `nome_barbearia` = VALUES(`nome_barbearia`);
 
 -- Senha padrão para todos os testes: 123456
--- Gerado via password_hash('123456', PASSWORD_DEFAULT)
--- $2y$10$wE99wJkL8xU/kGgJt6XWteF.94jJqjL992q7090b8oR4Qf7e0iVce
-
--- Inserir Usuários dos 4 Perfis
 INSERT INTO `usuarios` (`id`, `nome`, `email`, `cpf`, `telefone`, `senha`, `perfil`, `especialidade`, `chave_pix`, `tipo_chave_pix`, `comissao_percentual`) VALUES
 (1, 'Carlos Oliveira (Dono)', 'dono@cortenanavalha.com.br', '111.222.333-44', '(11) 99999-0001', '$2y$10$q.E3n6G.Nss4wcbuB4CeWOVFmC8PgVkpWDqnZZzcnxg6z3kpx/I8y', 'dono', 'Mestre Barbeiro e Gestor', 'dono@cortenanavalha.com.br', 'E-mail', 100.00),
 (2, 'Lucas Navalha (Barbeiro)', 'lucas@cortenanavalha.com.br', '222.333.444-55', '(11) 99999-0002', '$2y$10$q.E3n6G.Nss4wcbuB4CeWOVFmC8PgVkpWDqnZZzcnxg6z3kpx/I8y', 'barbeiro', 'Degradê, Navalhado e Barboterapia', 'lucas.pix@cortenanavalha.com.br', 'E-mail', 50.00),
@@ -165,9 +241,9 @@ INSERT INTO `agendamentos` (`id`, `codigo_reserva`, `cliente_id`, `barbeiro_id`,
 ON DUPLICATE KEY UPDATE `codigo_reserva` = VALUES(`codigo_reserva`);
 
 -- Inserir Itens dos Agendamentos
-INSERT INTO `agendamento_itens` (`agendamento_id`, `servico_id`, `preco_momento`) VALUES
-(1, 4, 85.00),
-(2, 2, 55.00)
+INSERT INTO `agendamento_itens` (`id`, `agendamento_id`, `servico_id`, `nome_servico`, `preco_momento`) VALUES
+(1, 1, 4, 'Combo Premium: Corte + Barba', 85.00),
+(2, 2, 2, 'Degradê / Fade Americano', 55.00)
 ON DUPLICATE KEY UPDATE `preco_momento` = VALUES(`preco_momento`);
 
 -- Inserir Avaliação Inicial
@@ -175,85 +251,6 @@ INSERT INTO `avaliacoes` (`agendamento_id`, `cliente_id`, `barbeiro_id`, `estrel
 (1, 5, 2, 5, 'Atendimento impecável! O Lucas manda muito bem no degradê e a toalha quente é outro nível.')
 ON DUPLICATE KEY UPDATE `estrelas` = VALUES(`estrelas`);
 
-
--- ========================================================
--- RECURSOS ADICIONAIS CONFORME MODS.MD
--- ========================================================
-
--- 8. TABELA DE SERVIÇOS INDIVIDUAIS DOS BARBEIROS
-CREATE TABLE IF NOT EXISTS `barbeiro_servicos` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `barbeiro_id` INT NOT NULL,
-    `nome` VARCHAR(100) NOT NULL,
-    `descricao` TEXT DEFAULT NULL,
-    `preco` DECIMAL(10,2) NOT NULL,
-    `tempo_minutos` INT NOT NULL DEFAULT 30,
-    `categoria` ENUM('cabelo', 'barba', 'combo', 'especial') DEFAULT 'cabelo',
-    `ativo` TINYINT(1) DEFAULT 1,
-    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_barbeiro_servico` FOREIGN KEY (`barbeiro_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 9. TABELA DE TRANSAÇÕES FINANCEIRAS E COMPROVANTES
-CREATE TABLE IF NOT EXISTS `transacoes` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `codigo_transacao` VARCHAR(50) NOT NULL UNIQUE,
-    `agendamento_id` INT DEFAULT NULL,
-    `tipo` ENUM('recebimento', 'comissao', 'estorno') NOT NULL DEFAULT 'recebimento',
-    `metodo` ENUM('dinheiro', 'pix_fixo', 'mercadopago_pix', 'mercadopago_cartao', 'outro') NOT NULL DEFAULT 'dinheiro',
-    `valor_total` DECIMAL(10,2) NOT NULL,
-    `valor_recebido` DECIMAL(10,2) DEFAULT NULL,
-    `troco` DECIMAL(10,2) DEFAULT 0.00,
-    `cliente_id` INT DEFAULT NULL,
-    `funcionario_id` INT DEFAULT NULL,
-    `operador_id` INT DEFAULT NULL,
-    `status` ENUM('concluida', 'pendente', 'cancelada') DEFAULT 'concluida',
-    `detalhes` TEXT DEFAULT NULL,
-    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_transacao_agendamento` FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos` (`id`) ON DELETE SET NULL,
-    CONSTRAINT `fk_transacao_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
-    CONSTRAINT `fk_transacao_funcionario` FOREIGN KEY (`funcionario_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL,
-    CONSTRAINT `fk_transacao_operador` FOREIGN KEY (`operador_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 10. TABELA DE CONFIGURAÇÃO DE E-MAIL (SMTP/GMAIL)
-CREATE TABLE IF NOT EXISTS `configuracao_email` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `driver` ENUM('smtp', 'gmail', 'mail') DEFAULT 'gmail',
-    `host` VARCHAR(150) DEFAULT 'smtp.gmail.com',
-    `porta` INT DEFAULT 587,
-    `seguranca` ENUM('tls', 'ssl', 'none') DEFAULT 'tls',
-    `usuario` VARCHAR(150) DEFAULT '',
-    `senha` VARCHAR(255) DEFAULT '',
-    `remetente_nome` VARCHAR(150) DEFAULT 'Corte na Navalha Barbearia',
-    `remetente_email` VARCHAR(150) DEFAULT 'contato@cortenanavalha.com.br',
-    `ativo` TINYINT(1) DEFAULT 0,
-    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 11. TABELA DE TEMPLATES DE E-MAIL FORMATÁVEIS
-CREATE TABLE IF NOT EXISTS `templates_email` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `slug` VARCHAR(50) NOT NULL UNIQUE,
-    `titulo` VARCHAR(100) NOT NULL,
-    `assunto` VARCHAR(200) NOT NULL,
-    `corpo_html` LONGTEXT NOT NULL,
-    `variaveis_disponiveis` VARCHAR(255) DEFAULT '',
-    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- ========================================================
--- POLÍTICA DE CANCELAMENTO CONFORME LEIS DO CONSUMIDOR (CDC)
--- ========================================================
-ALTER TABLE `configuracao_empresa` 
-    ADD COLUMN IF NOT EXISTS `taxa_cancelamento_percentual` DECIMAL(5,2) DEFAULT 20.00,
-    ADD COLUMN IF NOT EXISTS `horas_minimas_cancelamento` INT DEFAULT 2,
-    ADD COLUMN IF NOT EXISTS `politica_cancelamento_texto` TEXT NULL;
-
-ALTER TABLE `agendamentos` 
-    ADD COLUMN IF NOT EXISTS `taxa_cancelamento` DECIMAL(10,2) DEFAULT 0.00,
-    ADD COLUMN IF NOT EXISTS `valor_reembolsado` DECIMAL(10,2) DEFAULT 0.00,
-    ADD COLUMN IF NOT EXISTS `taxa_isenta` TINYINT(1) DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS `cancelado_em` DATETIME NULL,
-    ADD COLUMN IF NOT EXISTS `motivo_cancelamento` VARCHAR(255) NULL;
+-- Registro padrão de e-mail se não existir
+INSERT IGNORE INTO `configuracao_email` (`id`, `driver`, `host`, `porta`, `seguranca`, `usuario`, `senha`, `remetente_nome`, `remetente_email`, `ativo`)
+VALUES (1, 'gmail', 'smtp.gmail.com', 587, 'tls', '', '', 'Corte na Navalha Barbearia', 'contato@cortenanavalha.com.br', 0);

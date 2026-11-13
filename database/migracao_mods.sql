@@ -20,6 +20,22 @@ ALTER TABLE `usuarios`
     ADD COLUMN IF NOT EXISTS `permite_catalogo_proprio` TINYINT(1) DEFAULT 0,
     ADD COLUMN IF NOT EXISTS `permissoes` TEXT DEFAULT NULL;
 
+-- 2B. Novas colunas em agendamentos e agendamento_itens (garantia de compatibilidade em bases antigas)
+ALTER TABLE `agendamentos`
+    ADD COLUMN IF NOT EXISTS `origem` ENUM('web', 'balcao') DEFAULT 'web',
+    ADD COLUMN IF NOT EXISTS `cliente_balcao` TINYINT(1) DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS `cliente_nome_avulso` VARCHAR(100) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS `taxa_cancelamento` DECIMAL(10,2) DEFAULT 0.00,
+    ADD COLUMN IF NOT EXISTS `valor_reembolsado` DECIMAL(10,2) DEFAULT 0.00,
+    ADD COLUMN IF NOT EXISTS `taxa_isenta` TINYINT(1) DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS `cancelado_em` DATETIME NULL,
+    ADD COLUMN IF NOT EXISTS `motivo_cancelamento` TEXT NULL;
+
+ALTER TABLE `agendamento_itens`
+    MODIFY COLUMN `servico_id` INT DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS `nome_servico` VARCHAR(150) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS `barbeiro_servico_id` INT DEFAULT NULL;
+
 -- 3. Tabela de serviços individuais do barbeiro
 CREATE TABLE IF NOT EXISTS `barbeiro_servicos` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,

@@ -364,72 +364,97 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="hidden" name="isentar_taxa" id="recHiddenIsentar" value="0">
                 
                 <div class="modal-body py-3">
-                    <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 mb-3">
-                        <span class="text-secondary small d-block">Cliente: <strong id="recCancCliente" class="text-white"></strong></span>
-                        <span class="text-secondary small d-block">Reserva: <strong id="recCancCodigo" class="text-gold font-monospace"></strong></span>
-                        <span class="text-secondary small d-block">Valor Total: <strong id="recCancValor" class="text-gold"></strong></span>
-                    </div>
-
-                    <!-- Alerta de Isenção para Agendamentos de Balcão -->
-                    <div id="alertaBalcaoIsento" class="alert alert-success py-2 small mb-3" style="display: none;">
-                        <i class="bi bi-shield-check me-1"></i> <strong>Atendimento de Balcão:</strong> Isento de taxa de cancelamento.
-                    </div>
-
-                    <!-- Opções de Cobrança / Isenção -->
-                    <div id="cardControleTaxa" class="card p-3 mb-3 border border-secondary border-opacity-50 bg-dark">
-                        <label class="form-label text-gold fw-bold small text-uppercase mb-2">
-                            <i class="bi bi-percent me-1"></i> Taxa de Cancelamento
-                        </label>
-                        
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao_taxa_recepcao" id="recOptIsentar" value="isentar" onchange="selecionarOpcaoTaxaRecepcao(this.value)">
-                            <label class="form-check-label text-white fw-bold small" for="recOptIsentar">
-                                Isentar Taxa (Reembolso de 100%)
-                            </label>
-                            <small class="text-secondary d-block ps-4">Utilize para cortesias ou reagendamentos combinados.</small>
+                    <div id="recCancEtapa1">
+                        <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 mb-3">
+                            <span class="text-secondary small d-block">Cliente: <strong id="recCancCliente" class="text-white"></strong></span>
+                            <span class="text-secondary small d-block">Reserva: <strong id="recCancCodigo" class="text-gold font-monospace"></strong></span>
+                            <span class="text-secondary small d-block">Valor Total: <strong id="recCancValor" class="text-gold"></strong></span>
                         </div>
 
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao_taxa_recepcao" id="recOptCobrar" value="cobrar" checked onchange="selecionarOpcaoTaxaRecepcao(this.value)">
-                            <label class="form-check-label text-white fw-bold small" for="recOptCobrar">
-                                Aplicar Taxa Padrão
-                            </label>
-                            <small class="text-secondary d-block ps-4">Reter taxa operacional pela reserva do horário.</small>
+                        <!-- Alerta de Isenção para Agendamentos de Balcão -->
+                        <div id="alertaBalcaoIsento" class="alert alert-success py-2 small mb-3" style="display: none;">
+                            <i class="bi bi-shield-check me-1"></i> <strong>Atendimento de Balcão:</strong> Isento de taxa de cancelamento.
                         </div>
 
-                        <div id="blocoCalculoTaxaRecepcao" class="mt-2 p-3 rounded bg-black border border-secondary border-opacity-25">
-                            <div class="row g-2 align-items-center mb-2">
-                                <div class="col-7">
-                                    <label class="form-label small text-secondary mb-0">Taxa da Barbearia:</label>
-                                </div>
-                                <div class="col-5">
-                                    <div class="input-group input-group-sm">
-                                        <input type="text" class="form-control text-secondary" id="recInputTaxaPerc" value="<?= $taxaPadraoCDC ?>%" readonly disabled style="background-color: #212529 !important; color: #adb5bd !important; cursor: not-allowed; border-color: #495057; font-weight: bold;" title="Definida pela administração">
-                                        <span class="input-group-text border-secondary" style="background-color: #1a1d20 !important;"><i class="bi bi-lock-fill text-muted"></i></span>
+                        <!-- Opções de Cobrança / Isenção -->
+                        <div id="cardControleTaxa" class="card p-3 mb-3 border border-secondary border-opacity-50 bg-dark">
+                            <label class="form-label text-gold fw-bold small text-uppercase mb-2">
+                                <i class="bi bi-percent me-1"></i> Taxa de Cancelamento
+                            </label>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="opcao_taxa_recepcao" id="recOptIsentar" value="isentar" onchange="selecionarOpcaoTaxaRecepcao(this.value)">
+                                <label class="form-check-label text-white fw-bold small" for="recOptIsentar">
+                                    Isentar Taxa (Reembolso de 100%)
+                                </label>
+                                <small class="text-secondary d-block ps-4">Utilize para cortesias ou reagendamentos combinados.</small>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="opcao_taxa_recepcao" id="recOptCobrar" value="cobrar" checked onchange="selecionarOpcaoTaxaRecepcao(this.value)">
+                                <label class="form-check-label text-white fw-bold small" for="recOptCobrar">
+                                    Aplicar Taxa Padrão
+                                </label>
+                                <small class="text-secondary d-block ps-4">Reter taxa operacional pela reserva do horário.</small>
+                            </div>
+
+                            <div id="blocoCalculoTaxaRecepcao" class="mt-2 p-3 rounded bg-black border border-secondary border-opacity-25">
+                                <div class="row g-2 align-items-center mb-2">
+                                    <div class="col-7">
+                                        <label class="form-label small text-secondary mb-0">Taxa da Barbearia:</label>
+                                    </div>
+                                    <div class="col-5">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control text-secondary" id="recInputTaxaPerc" value="<?= $taxaPadraoCDC ?>%" readonly disabled style="background-color: #212529 !important; color: #adb5bd !important; cursor: not-allowed; border-color: #495057; font-weight: bold;" title="Definida pela administração">
+                                            <span class="input-group-text border-secondary" style="background-color: #1a1d20 !important;"><i class="bi bi-lock-fill text-muted"></i></span>
+                                        </div>
                                     </div>
                                 </div>
+                                
+                                <div class="d-flex justify-content-between small text-secondary border-top border-secondary border-opacity-25 pt-2">
+                                    <span>Retenção do Salão:</span>
+                                    <strong class="text-danger" id="recValorRetencaoPreview">R$ 0,00</strong>
+                                </div>
+                                <div class="d-flex justify-content-between small text-secondary pt-1">
+                                    <span>Saldo a Reembolsar ao Cliente:</span>
+                                    <strong class="text-success" id="recValorReembolsoPreview">R$ 0,00</strong>
+                                </div>
                             </div>
-                            
-                            <div class="d-flex justify-content-between small text-secondary border-top border-secondary border-opacity-25 pt-2">
-                                <span>Retenção do Salão:</span>
-                                <strong class="text-danger" id="recValorRetencaoPreview">R$ 0,00</strong>
-                            </div>
-                            <div class="d-flex justify-content-between small text-secondary pt-1">
-                                <span>Saldo a Reembolsar ao Cliente:</span>
-                                <strong class="text-success" id="recValorReembolsoPreview">R$ 0,00</strong>
-                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="recMotivo" class="form-label small text-secondary">Motivo do Cancelamento</label>
+                            <textarea class="form-control form-control-sm" name="motivo_cancelamento" id="recMotivo" rows="2" placeholder="Ex: Cliente solicitou cancelamento, reagendamento..." required></textarea>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="recMotivo" class="form-label small text-secondary">Motivo do Cancelamento</label>
-                        <textarea class="form-control form-control-sm" name="motivo_cancelamento" id="recMotivo" rows="2" placeholder="Ex: Cliente solicitou cancelamento, reagendamento..." required></textarea>
+                    <div id="recCancEtapa2" style="display: none;">
+                        <div class="alert alert-danger border-danger bg-danger bg-opacity-10 text-white mb-0">
+                            <div class="d-flex align-items-center gap-2 fw-bold text-danger mb-2">
+                                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                                <span>Confirmação de Cancelamento (Etapa 2 de 2)</span>
+                            </div>
+                            <p class="small mb-2">
+                                Tem certeza que deseja cancelar o agendamento de <strong id="recCancClienteConfirma" class="text-white"></strong> (<strong id="recCancCodigoConfirma" class="text-gold font-monospace"></strong>)?
+                            </p>
+                            <p class="small text-secondary mb-0">
+                                Após confirmado, apenas o proprietário (Dono) poderá reverter este cancelamento.
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" id="recCancFooter1">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm fw-bold" onclick="avancarEtapaCancelarRecepcao(true)">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Prosseguir para Confirmação
+                    </button>
+                </div>
+                <div class="modal-footer" id="recCancFooter2" style="display: none;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="avancarEtapaCancelarRecepcao(false)">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    </button>
                     <button type="submit" class="btn btn-danger btn-sm fw-bold">
-                        <i class="bi bi-x-circle me-1"></i> Confirmar Cancelamento
+                        <i class="bi bi-x-circle me-1"></i> Sim, Confirmar Cancelamento
                     </button>
                 </div>
             </form>
@@ -457,10 +482,29 @@ function filtrarTabelaRecepcao() {
     });
 }
 
+function avancarEtapaCancelarRecepcao(irParaEtapa2) {
+    if (irParaEtapa2) {
+        const motivoEl = document.getElementById('recMotivo');
+        if (!motivoEl.value.trim()) {
+            motivoEl.focus();
+            motivoEl.reportValidity();
+            return;
+        }
+    }
+    document.getElementById('recCancEtapa1').style.display = irParaEtapa2 ? 'none' : 'block';
+    document.getElementById('recCancFooter1').style.display = irParaEtapa2 ? 'none' : 'flex';
+    document.getElementById('recCancEtapa2').style.display = irParaEtapa2 ? 'block' : 'none';
+    document.getElementById('recCancFooter2').style.display = irParaEtapa2 ? 'flex' : 'none';
+}
+
 function abrirModalCancelarRecepcao(ag, nomeExibicao) {
+    avancarEtapaCancelarRecepcao(false);
     document.getElementById('recCancId').value = ag.id;
-    document.getElementById('recCancCliente').innerText = nomeExibicao || ag.cliente_nome_cadastrado;
+    const nome = nomeExibicao || ag.cliente_nome_cadastrado;
+    document.getElementById('recCancCliente').innerText = nome;
     document.getElementById('recCancCodigo').innerText = ag.codigo_reserva;
+    document.getElementById('recCancClienteConfirma').innerText = nome;
+    document.getElementById('recCancCodigoConfirma').innerText = '#' + ag.codigo_reserva;
     valorTotalCancelamentoRecepcao = parseFloat(ag.valor_total) || 0;
     document.getElementById('recCancValor').innerText = 'R$ ' + valorTotalCancelamentoRecepcao.toFixed(2).replace('.', ',');
     

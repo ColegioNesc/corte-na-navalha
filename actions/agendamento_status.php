@@ -29,15 +29,28 @@ if (!in_array($novoStatus, $statusValidos) || empty($agendamentoId)) {
 try {
     $pdo = getDBConnection();
 
+    $stmtAtual = $pdo->prepare("SELECT id, barbeiro_id, status_atendimento FROM agendamentos WHERE id = :id LIMIT 1");
+    $stmtAtual->execute([':id' => $agendamentoId]);
+    $agAtual = $stmtAtual->fetch();
+
+    if (!$agAtual) {
+        setMensagemToast('danger', 'Não encontrado', 'Agendamento não localizado.');
+        header('Location: ' . BASE_URL . '/index.php');
+        exit;
+    }
+
     // Se for barbeiro, só pode alterar agendamentos dele próprio
-    if ($usuario['perfil'] === 'barbeiro') {
-        $stmt = $pdo->prepare("SELECT id FROM agendamentos WHERE id = :id AND barbeiro_id = :barbeiro_id LIMIT 1");
-        $stmt->execute([':id' => $agendamentoId, ':barbeiro_id' => $usuario['id']]);
-        if (!$stmt->fetch()) {
-            setMensagemToast('danger', 'Acesso Negado', 'Este agendamento não está sob sua responsabilidade.');
-            header('Location: ' . BASE_URL . '/barbeiro/dashboard.php');
-            exit;
-        }
+    if ($usuario['perfil'] === 'barbeiro' && $agAtual['barbeiro_id'] != $usuario['id']) {
+        setMensagemToast('danger', 'Acesso Negado', 'Este agendamento não está sob sua responsabilidade.');
+        header('Location: ' . BASE_URL . '/barbeiro/dashboard.php');
+        exit;
+    }
+
+    // Apenas o dono pode reverter um agendamento cancelado
+    if ($agAtual['status_atendimento'] === 'cancelado' && $usuario['perfil'] !== 'dono') {
+        setMensagemToast('danger', 'Acesso Negado', 'Apenas o proprietário (Dono) pode reverter um agendamento cancelado.');
+        header('Location: ' . (!empty($redirect) ? $redirect : BASE_URL . '/index.php'));
+        exit;
     }
 
     $stmtUpdate = $pdo->prepare("UPDATE agendamentos SET status_atendimento = :status WHERE id = :id");

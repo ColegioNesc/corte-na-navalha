@@ -73,7 +73,7 @@ try {
     }
 
     // Cálculo do tempo restante
-    $dataHoraStr = $agendamento['data_agendamento'] . ' ' . $agendamento['horario_inicio'];
+    $dataHoraStr = $agendamento['data_agendamento'] . ' ' . $agendamento['horario'];
     $agendamentoTs = strtotime($dataHoraStr);
     $agoraTs = time();
     $horasRestantes = ($agendamentoTs - $agoraTs) / 3600.0;
@@ -172,12 +172,10 @@ try {
         $stmtTrx = $pdo->prepare("
             INSERT INTO transacoes (
                 codigo_transacao, agendamento_id, cliente_id, funcionario_id, operador_id,
-                tipo, metodo, valor_total, taxa_gateway, valor_recebido, troco, valor_liquido,
-                status, detalhes
+                tipo, metodo, valor_total, valor_recebido, troco, status, detalhes
             ) VALUES (
                 :cod, :agendamento_id, :cliente_id, :barbeiro_id, :operador_id,
-                'estorno', 'estorno_pix', :reembolso, :taxa, 0.0, 0.0, :valor_liquido,
-                'concluida', :detalhes
+                'estorno', 'outro', :reembolso, 0.0, 0.0, 'concluida', :detalhes
             )
         ");
         $stmtTrx->execute([
@@ -187,8 +185,6 @@ try {
             ':barbeiro_id'    => $agendamento['barbeiro_id'],
             ':operador_id'    => $usuario['id'],
             ':reembolso'      => $valorReembolsado,
-            ':taxa'           => $valorTaxa,
-            ':valor_liquido'  => $valorReembolsado,
             ':detalhes'       => 'Cancelamento: ' . $motivo . ($taxaIsenta ? ' (Taxa Isenta)' : " (Taxa de {$taxaAplicadaPercent}%)")
         ]);
     }
@@ -198,7 +194,7 @@ try {
         $mailer = new CustomMailer();
         $corpoEmail = "Olá <strong>" . htmlspecialchars($agendamento['cliente_nome']) . "</strong>,<br><br>"
             . "Confirmamos o cancelamento do seu agendamento <strong>#" . htmlspecialchars($agendamento['codigo_reserva']) . "</strong> "
-            . "agendado para o dia " . date('d/m/Y', strtotime($agendamento['data_agendamento'])) . " às " . htmlspecialchars($agendamento['horario_inicio']) . ".<br><br>";
+            . "agendado para o dia " . date('d/m/Y', strtotime($agendamento['data_agendamento'])) . " às " . htmlspecialchars(substr($agendamento['horario'], 0, 5)) . ".<br><br>";
 
         if ($jaEstavaPago) {
             if ($valorTaxa > 0) {
