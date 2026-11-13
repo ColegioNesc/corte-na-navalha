@@ -191,7 +191,6 @@ try {
 
     // Envia e-mail de cancelamento para o cliente
     if (!empty($agendamento['cliente_email'])) {
-        $mailer = new CustomMailer();
         $corpoEmail = "Olá <strong>" . htmlspecialchars($agendamento['cliente_nome']) . "</strong>,<br><br>"
             . "Confirmamos o cancelamento do seu agendamento <strong>#" . htmlspecialchars($agendamento['codigo_reserva']) . "</strong> "
             . "agendado para o dia " . date('d/m/Y', strtotime($agendamento['data_agendamento'])) . " às " . htmlspecialchars(substr($agendamento['horario'], 0, 5)) . ".<br><br>";
@@ -205,7 +204,13 @@ try {
         }
         $corpoEmail .= "Motivo registrado: " . htmlspecialchars($motivo) . "<br><br>Atenciosamente,<br>Equipe Barbearia Corte na Navalha";
 
-        $mailer->enviarEmail($agendamento['cliente_email'], $agendamento['cliente_nome'], "Cancelamento de Agendamento #" . $agendamento['codigo_reserva'], $corpoEmail);
+        try {
+            if (class_exists('BarberMailer')) {
+                BarberMailer::enviar($agendamento['cliente_email'], $agendamento['cliente_nome'], "Cancelamento de Agendamento #" . $agendamento['codigo_reserva'], $corpoEmail);
+            }
+        } catch (Throwable $mailErr) {
+            // Falha no envio de e-mail não deve impedir a conclusão do cancelamento
+        }
     }
 
     // Feedback ao usuário
